@@ -35,13 +35,14 @@ export class BattleScene {
   constructor(session: MatchSession, assets: GameAssets, reduced: boolean) {
     this.assets = assets;
     this.reduced = reduced;
-    this.world.addChild(
-      new TilingSprite({
-        texture: assets.water,
-        width: session.config.level.width,
-        height: session.config.level.height,
-      }),
-    );
+    const water = new TilingSprite({
+      texture: assets.water,
+      width: session.config.level.width,
+      height: session.config.level.height,
+    });
+    water.tileScale.set(2.4);
+    water.tint = 0x9dcbd5;
+    this.world.addChild(water);
     for (const island of session.config.level.islands) {
       const sprite = new Sprite(assets.island);
       sprite.position.set(island.x, island.y);

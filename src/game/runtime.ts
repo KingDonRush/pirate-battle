@@ -8,6 +8,7 @@ import { BattleScene } from './rendering';
 
 export type HudSnapshot = Readonly<{
   state: 'loading' | 'running' | 'reflowing' | 'paused' | 'finished';
+  audioError: string | null;
   health: number;
   score: number;
   remaining: number;
@@ -65,6 +66,7 @@ export class GameRuntime {
     this.input = new InputController(() => this.pause('Paused'));
     this.hud = {
       state: 'loading',
+      audioError: null,
       health: 100,
       score: 0,
       remaining: session.config.duration,
@@ -139,6 +141,7 @@ export class GameRuntime {
           : 'running';
     const next: HudSnapshot = {
       state,
+      audioError: this.audio.error,
       health: this.simulation.player.health,
       score: this.simulation.score,
       remaining: Math.max(
@@ -149,6 +152,7 @@ export class GameRuntime {
       reflowRevision: this.reflow.revision,
     };
     if (
+      next.audioError !== this.hud.audioError ||
       next.state !== this.hud.state ||
       next.health !== this.hud.health ||
       next.score !== this.hud.score ||
@@ -276,6 +280,7 @@ export class GameRuntime {
       this.finishing = true;
       this.freeze();
       this.application.stop();
+      this.audio.stop(this.audioOwner);
       this.finished({
         session: this.session,
         score: this.simulation.score,

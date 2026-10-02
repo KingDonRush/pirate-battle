@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  lazy,
+  Suspense,
+} from 'react';
 import {
   choosePlayer,
   createConfig,
@@ -11,13 +18,23 @@ import {
 import type { AudioService } from './game/audio';
 import type { CompletedLocalMatch } from './game/runtime';
 import type { MatchSession } from './game/simulation';
-import { GameScreen } from './ui/GameScreen';
-import { completedRecord, localResult } from './data/contracts';
-import { latestResult, persistResult } from './data/database';
+const GameScreen = lazy(() =>
+  import('./ui/GameScreen').then((module) => ({ default: module.GameScreen })),
+);
+import { localResult } from './data/contracts';
+import type { SubmissionService } from './data/submissions';
+import { CaptainLog } from './ui/CaptainLog';
+import { latestResult } from './data/database';
 import titleUrl from '../assets/png/retina/ui/menu/title_pirate_battle.png?url';
 import logoUrl from '../assets/logo_jungle_gaming.svg?url';
 
-export function App({ audio }: { audio: AudioService }) {
+export function App({
+  audio,
+  submissions,
+}: {
+  audio: AudioService;
+  submissions: SubmissionService;
+}) {
   const [screen, setScreen] = useState<'menu' | 'options' | 'game' | 'result'>(
     'menu',
   );
@@ -26,15 +43,18 @@ export function App({ audio }: { audio: AudioService }) {
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<MatchSession | null>(null);
   const [result, setResult] = useState<CompletedLocalMatch | null>(null);
-  const [saveState, setSaveState] = useState<'saving' | 'pending' | 'error'>(
-    'pending',
+  const saves = useSyncExternalStore(
+    submissions.subscribe,
+    submissions.getSnapshot,
   );
+  const saveState = result ? saves.byId[result.session.id] : undefined;
   useEffect(() => {
     let obsolete = false;
     void latestResult()
       .then((record) => {
         if (obsolete || !record) return;
         setResult(localResult(record));
+        void submissions.status(record.matchId);
         if (localStorage.getItem('pirate-battle:view') === 'result')
           setScreen('result');
       })
@@ -47,14 +67,13 @@ export function App({ audio }: { audio: AudioService }) {
     return () => {
       obsolete = true;
     };
-  }, []);
-  const saveResult = useCallback((completed: CompletedLocalMatch) => {
-    setSaveState('saving');
-    void completedRecord(completed)
-      .then(persistResult)
-      .then(() => setSaveState('pending'))
-      .catch(() => setSaveState('error'));
-  }, []);
+  }, [submissions]);
+  const saveResult = useCallback(
+    (completed: CompletedLocalMatch) => {
+      void submissions.completed(completed);
+    },
+    [submissions],
+  );
   const finish = useCallback(
     (completed: CompletedLocalMatch) => {
       const immutable = Object.freeze(completed);
@@ -108,29 +127,43 @@ export function App({ audio }: { audio: AudioService }) {
   }
   if (screen === 'game' && session)
     return (
-      <GameScreen
-        key={session.id}
-        session={session}
-        audio={audio}
-        reducedMotion={
-          settings.reducedMotion ||
-          matchMedia('(prefers-reduced-motion: reduce)').matches
+      <Suspense
+        fallback={
+          <main className="menu-scene">
+            <section className="wood-panel loading-panel">
+              <h2>Preparing the battle</h2>
+              <p role="status">Loading the arena…</p>
+              <button className="secondary" onClick={exit}>
+                Main Menu
+              </button>
+            </section>
+          </main>
         }
-        onExit={exit}
-        onFinish={finish}
-        options={(close) => (
-          <Options
-            initial={settings}
-            onCancel={close}
-            onSave={(next) => {
-              saveSettings(next);
-              setSettings(next);
-              audio.update(next);
-              close();
-            }}
-          />
-        )}
-      />
+      >
+        <GameScreen
+          key={session.id}
+          session={session}
+          audio={audio}
+          reducedMotion={
+            settings.reducedMotion ||
+            matchMedia('(prefers-reduced-motion: reduce)').matches
+          }
+          onExit={exit}
+          onFinish={finish}
+          options={(close) => (
+            <Options
+              initial={settings}
+              onCancel={close}
+              onSave={(next) => {
+                saveSettings(next);
+                setSettings(next);
+                audio.update(next);
+                close();
+              }}
+            />
+          )}
+        />
+      </Suspense>
     );
   return (
     <div className="menu-scene">
@@ -157,26 +190,18 @@ export function App({ audio }: { audio: AudioService }) {
               <span>points</span>
             </p>
             <p>{result.session.player.name}</p>
-            <p role="status">
-              {saveState === 'saving'
-                ? 'Saving on this device…'
-                : saveState === 'pending'
-                  ? 'Stored on this device. Registration pending.'
-                  : 'Result could not be stored. Try again.'}
-            </p>
-            {saveState === 'error' ? (
+            <p role="status">{saveState?.message ?? 'Checking save status…'}</p>
+            {saveState?.status === 'error' ||
+            saveState?.status === 'pending' ? (
               <button
                 className="text-button"
-                onClick={() => saveResult(result)}
+                onClick={() => {
+                  void submissions.retry(result.session.id, result);
+                }}
               >
                 Try again
               </button>
             ) : null}
-            <p>
-              {Math.floor(result.duration / 60)}:
-              {String(Math.floor(result.duration % 60)).padStart(2, '0')} played
-              · {result.reason === 'time' ? 'Time up' : 'Ship destroyed'}
-            </p>
             <div className="stack">
               <button className="primary" onClick={() => play()}>
                 Play Again
@@ -245,6 +270,26 @@ export function App({ audio }: { audio: AudioService }) {
                 Last result
               </button>
             ) : null}
+            {saves.pending > 0 ? (
+              <p role="status" className="pending-notice">
+                {saves.pending} match{saves.pending === 1 ? '' : 'es'} awaiting
+                registration.{' '}
+                <button
+                  className="inline-button"
+                  onClick={() => {
+                    void submissions.retryAll();
+                  }}
+                >
+                  Retry saves
+                </button>
+              </p>
+            ) : null}
+            {saves.error ? <p role="alert">{saves.error}</p> : null}
+            <CaptainLog
+              settings={settings}
+              player={readPlayer()}
+              submissions={submissions}
+            />
             <details className="instructions">
               <summary>How to play</summary>
               <p>
@@ -283,6 +328,8 @@ function Options({
     [spawn, setSpawn] = useState(String(initial.spawnInterval));
   const [muted, setMuted] = useState(initial.muted),
     [reduced, setReduced] = useState(initial.reducedMotion);
+  const [effectsVolume, setEffectsVolume] = useState(initial.effectsVolume),
+    [ambienceVolume, setAmbienceVolume] = useState(initial.ambienceVolume);
   const [volume, setVolume] = useState(initial.volume),
     [error, setError] = useState<string | null>(null);
   return (
@@ -306,6 +353,8 @@ function Options({
               duration: Number(duration),
               spawnInterval: Number(spawn),
               volume,
+              effectsVolume,
+              ambienceVolume,
               muted,
               reducedMotion: reduced,
             });
@@ -361,6 +410,30 @@ function Options({
           step="0.05"
           value={volume}
           onChange={(event) => setVolume(Number(event.target.value))}
+        />
+        <label htmlFor="effects-volume">
+          Effects volume · {Math.round(effectsVolume * 100)}%
+        </label>
+        <input
+          id="effects-volume"
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={effectsVolume}
+          onChange={(event) => setEffectsVolume(Number(event.target.value))}
+        />
+        <label htmlFor="ambience-volume">
+          Ambience volume · {Math.round(ambienceVolume * 100)}%
+        </label>
+        <input
+          id="ambience-volume"
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={ambienceVolume}
+          onChange={(event) => setAmbienceVolume(Number(event.target.value))}
         />
         <label className="check-label">
           <input

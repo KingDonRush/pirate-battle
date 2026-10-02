@@ -16,9 +16,14 @@ async function start(page: Page, manual = false) {
   await page
     .getByRole('button', { name: 'Play as guest', exact: true })
     .click();
-  await expect(
-    page.getByRole('button', { name: 'Pause', exact: true }),
-  ).toBeVisible();
+  await expect
+    .poll(async () => {
+      await page.clock.runFor(100);
+      return page
+        .getByRole('button', { name: 'Pause', exact: true })
+        .isVisible();
+    })
+    .toBe(true);
   await page.clock.runFor(500);
 }
 test('G04 swept geometry selects first coastal and capsule impact', () => {
@@ -195,6 +200,7 @@ test('G08 death result persists with its original ID and clean replay', async ({
 }) => {
   test.setTimeout(180000);
   await start(page, true);
+  await page.clock.resume();
   const id = (await world(page)).matchId;
   for (let part = 0; part < 20; part++) {
     await page.evaluate(() => window.pirateBattle?.advance(2000));
@@ -208,13 +214,13 @@ test('G08 death result persists with its original ID and clean replay', async ({
   await expect(
     page.getByRole('heading', { name: 'Defeated', exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole('status')).toContainText('Stored on this device');
+  await expect(page.getByRole('status')).toContainText('Match saved.');
   const record = await page.evaluate(async () => {
     const opening = indexedDB.open('pirate-battle:v1', 1);
     const db = await new Promise<IDBDatabase>((resolve) => {
       opening.onsuccess = () => resolve(opening.result);
     });
-    const request = db.transaction('outbox').objectStore('outbox').getAll();
+    const request = db.transaction('records').objectStore('records').getAll();
     const rows = await new Promise<unknown[]>((resolve) => {
       request.onsuccess = () => resolve(request.result as unknown[]);
     });

@@ -15,9 +15,14 @@ async function start(page: Page) {
   await page
     .getByRole('button', { name: 'Play as guest', exact: true })
     .click();
-  await expect(
-    page.getByRole('button', { name: 'Pause', exact: true }),
-  ).toBeVisible();
+  await expect
+    .poll(async () => {
+      await page.clock.runFor(100);
+      return page
+        .getByRole('button', { name: 'Pause', exact: true })
+        .isVisible();
+    })
+    .toBe(true);
   await page.clock.runFor(1000);
   await expect
     .poll(async () => (await observe(page)).hud.state)

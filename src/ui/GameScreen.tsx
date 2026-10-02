@@ -193,6 +193,11 @@ function Battle({
           Adjusting arena…
         </div>
       ) : null}
+      {hud.audioError ? (
+        <p className="sound-notice" role="status">
+          {hud.audioError}
+        </p>
+      ) : null}
       <p className="sr-only" role="status">
         {hud.state === 'paused'
           ? hud.reason

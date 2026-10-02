@@ -5,6 +5,8 @@ import { App } from './App';
 import './styles.css';
 import { AudioService } from './game/audio';
 import { readSettings } from './game/config';
+import { SubmissionService } from './data/submissions';
+import { closeDatabase } from './data/database';
 
 const queryClient = new QueryClient();
 
@@ -15,12 +17,19 @@ async function bootstrap() {
   const { startMockWorker } = await import('./mocks/browser');
   void startMockWorker().catch(() => {});
   const audio = new AudioService(readSettings());
-  if (import.meta.hot) import.meta.hot.dispose(() => audio.dispose());
+  const submissions = new SubmissionService(queryClient);
+  submissions.start();
+  if (import.meta.hot)
+    import.meta.hot.dispose(() => {
+      audio.dispose();
+      submissions.dispose();
+      void closeDatabase();
+    });
 
   createRoot(root).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <App audio={audio} />
+        <App audio={audio} submissions={submissions} />
       </QueryClientProvider>
     </StrictMode>,
   );
