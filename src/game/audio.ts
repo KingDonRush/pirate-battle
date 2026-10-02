@@ -54,6 +54,10 @@ export class AudioService {
   }
   unlock() {
     if (this.disposed) return;
+    if (this.error) {
+      this.error = null;
+      this.loading = null;
+    }
     try {
       this.context ??= new AudioContext({ latencyHint: 'interactive' });
       if (!this.master) {

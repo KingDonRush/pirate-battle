@@ -478,3 +478,220 @@ progress {
     scroll-behavior: auto;
   }
 }
+.last-result {
+  margin-top: 16px;
+  width: 100%;
+}
+.captain-log {
+  margin-top: 24px;
+  text-align: left;
+}
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.tabs button {
+  min-height: 48px;
+  background: #19313c;
+  color: #e8d6b0;
+  border: 1px solid #827857;
+  border-radius: 4px;
+  font-weight: 650;
+  padding: 8px;
+}
+.tabs button[aria-selected='true'] {
+  background: #dec082;
+  color: #251d11;
+}
+.records {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.record {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #102530;
+  padding: 12px;
+  border-radius: 4px;
+}
+.record-info {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.record-info time,
+.record-info > span {
+  font-size: 12px;
+  color: #cad4ce;
+}
+.your-record {
+  outline: 1px solid #d8b46d;
+  background: #384138;
+}
+.rank {
+  color: #ffda87;
+  font-weight: 700;
+}
+.points {
+  text-align: center;
+  font-size: 20px;
+  color: #ffda87;
+}
+.points span {
+  display: block;
+  font-weight: 400;
+  font-size: 12px;
+}
+.you {
+  font-size: 12px;
+  background: #e5c383;
+  color: #172e39;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+.network-controls {
+  margin-top: 20px;
+  border-top: 1px solid #b2986844;
+  padding-top: 12px;
+}
+.network-controls select {
+  width: 100%;
+  padding: 10px;
+  min-height: 48px;
+  background: #102530;
+  border: 1px solid #b3976b;
+  border-radius: 4px;
+  color: inherit;
+}
+.inline-button {
+  font: inherit;
+  border: 0;
+  text-decoration: underline;
+  background: transparent;
+  min-height: 32px;
+  padding: 0 4px;
+}
+.pending-notice {
+  margin-top: 16px;
+  border: 1px solid #b79b63;
+  padding: 8px;
+}
+.fixture-label {
+  opacity: 0.85;
+}
+.hud-health,
+.hud-counter {
+  background: url('../assets/png/retina/ui/hud/counter_panel.png') center/100%
+    100% no-repeat;
+  padding: 8px 16px;
+  min-height: 54px;
+}
+.hud-counter {
+  min-width: 88px;
+}
+.hud-counter span,
+.eyebrow {
+  font-size: 14px;
+}
+.battle-hud {
+  gap: 12px;
+}
+.arena-viewport:focus-visible {
+  outline: 2px solid #e1c687;
+  outline-offset: 2px;
+}
+.round-control:focus-visible {
+  border-radius: 50%;
+}
+.small-button:hover {
+  background: #345464;
+}
+.small-button:active {
+  transform: translateY(1px);
+}
+@media (orientation: portrait) {
+  .hud-health,
+  .hud-counter {
+    padding: 6px 10px;
+    min-height: 48px;
+  }
+  .hud-counter {
+    min-width: 54px;
+  }
+  .hud-health {
+    gap: 4px;
+  }
+  .battle-hud {
+    gap: 6px;
+  }
+  .captain .eyebrow {
+    font-size: 12px;
+  }
+}
+@media (max-height: 400px) and (orientation: landscape) {
+  .hud-health,
+  .hud-counter {
+    padding: 6px 10px;
+    min-height: 48px;
+  }
+  .hud-counter {
+    min-width: 64px;
+  }
+  .battle-hud {
+    gap: 8px;
+  }
+}
+@media (min-width: 900px) {
+  .menu-panel:has(.captain-log) {
+    width: min(100%, 980px);
+    display: grid;
+    grid-template-columns: minmax(260px, 360px) minmax(300px, 1fr);
+    gap: 0 32px;
+    align-items: start;
+  }
+  .menu-panel:has(.captain-log) > h1,
+  .menu-panel:has(.captain-log) > form,
+  .menu-panel:has(.captain-log) > .mission,
+  .menu-panel:has(.captain-log) > .instructions,
+  .menu-panel:has(.captain-log) > .last-result,
+  .menu-panel:has(.captain-log) > .brand,
+  .menu-panel:has(.captain-log) > .pending-notice {
+    grid-column: 1;
+  }
+  .menu-panel:has(.captain-log) > .captain-log {
+    grid-column: 2;
+    grid-row: 1 / span 8;
+    margin: 4px 0 0;
+    padding-left: 24px;
+    border-left: 1px solid #d1b27d44;
+  }
+  .menu-panel:has(.captain-log) > .brand {
+    margin-top: 16px;
+  }
+}
+.sound-notice {
+  position: absolute;
+  top: 80px;
+  left: 8px;
+  background: #183441ee;
+  border: 1px solid #cca568;
+  padding: 8px;
+  max-width: calc(100% - 16px);
+  font-size: 14px;
+  pointer-events: none;
+}

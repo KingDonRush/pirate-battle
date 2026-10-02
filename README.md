@@ -4,7 +4,7 @@
 
 Preparation for the Jungle Gaming [game developer challenge](https://github.com/junglegaming/game-developer-challenge). The original brief is preserved in [CHALLENGE.md](CHALLENGE.md).
 
-**Current state:** the first playable slice has a supplied-art Pixi arena, name/guest entry, persistent options, real forward/rotation and hull collisions, simultaneous touch input, manual/blur/hidden pause, and animated coordinated reflow across desktop, portrait and landscape. Durable HTTP registration, data tabs and final profiling/publication are in the open delivery [Issue #12](https://github.com/KingDonRush/pirate-battle/issues/12). Partial checks do not award rubric points.
+**Current state:** the first playable slice has a supplied-art Pixi arena, name/guest entry, persistent options, real forward/rotation and hull collisions, simultaneous touch input, manual/blur/hidden pause, and animated coordinated reflow across desktop, portrait and landscape. Durable HTTP registration, data tabs and selectable network scenarios are implemented; final verification/profiling/publication remain in the open delivery [Issue #12](https://github.com/KingDonRush/pirate-battle/issues/12). Partial checks do not award rubric points.
 
 ## Setup
 
@@ -17,7 +17,7 @@ npm run browser:install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. No environment variables or private services are required. MSW starts in development and production. Its ranking and history handlers are currently empty.
+Open `http://127.0.0.1:5173`. No environment variables or private services are required. MSW starts in development and production before data requests. The same handlers serve typed ranking, history and idempotent match registration. Local combat/options remain available if the worker or APIs fail.
 
 ## Commands
 
@@ -71,3 +71,13 @@ A read-only `window.pirateBattle.observe()` projection exposes state for browser
 Completed time/death results and their original name/config are written to IndexedDB before registration. Refresh restores the last result; Play Again creates a new identity and clean world. Pause Options applies combat changes only to the next match. Audio uses bounded supplied effects, at most two loops and twelve effect voices.
 
 For long browser rule checks, `?seed=42&clock=manual` suspends automatic simulation time and permits `window.pirateBattle.advance(milliseconds)`. It advances the same runtime accumulator, input, rules, collisions and rendering in bounded increments; it cannot set world fields or force outcomes. Ordinary play and profiling use real time. Native visibility checks use a headed Chromium project under `xvfb-run -a npm run check` on Linux; it creates actual background tabs and disables Playwright's focus emulation.
+
+## Ranking, history and failure recovery
+
+Ranking uses the complete combat configuration fingerprint, score descending, active duration descending, then completion date and match ID ascending. History belongs to the stable local player ID and retains the name/config used by each completed match. Pagination shows five records. Standard ranking includes clearly marked fixture players; a different ruleset can be empty until its first recorded match.
+
+Completed results persist to IndexedDB before Axios transport. TanStack Query owns queries, registration mutations and bounded retries. Same-ID retries recover one canonical mock record; acknowledgement removes the outbox item. A new match remains available while an older save is pending. Names, options, confirmed records, latest result and pending records survive refresh. Reload or leaving active combat abandons that session without registration.
+
+The menu's Network conditions panel selects Success, Empty lists, Multiple pages, Slow responses (1800 ms), Variable latency (120/900/300/1500 ms), Responses out of order (1800/100 ms), Request timeout (6000 ms against Axios 4000 ms), Connection failure, HTTP 400/500, separate ranking/history unavailability, Commit then timeout, and Registration unavailable. Select Success to recover. The commit scenario writes before delaying its first acknowledgement; a duplicate returns the original result. Normal scenario changes retain records. Reset demo data confirms deletion of only the game's confirmed/pending results, scenario and query cache; name/options remain.
+
+Transient errors get at most two retries after 1 and 2 seconds. HTTP 4xx, payload and conflict errors require explicit action. API failures show useful errors and cannot interrupt play. Acknowledged writes cancel older reads and refetch both projections; lower database revisions are rejected. Shared handlers support browser and Node HTTP tests. Mock records are local demonstration state, not an authenticated anti-cheat backend.

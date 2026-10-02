@@ -2,7 +2,7 @@
 
 > **Read contract:** solution documentation; proposals and verified behavior are distinguished below. Recover uncertain task context through [the index](.agents/index.md); the [company brief](CHALLENGE.md) governs material requirements.
 
-Status: first playable slice implemented. Movement/capsule-island collision, input ownership, loading/retry, cached semantic HUD, pause/disposal and coordinated responsive reflow have browser checks. Combat, damage/score, AI and completion are now implemented; remote data/recovery sections remain proposals until their owning Issues ship.
+Status: first playable slice implemented. Movement/capsule-island collision, input ownership, loading/retry, cached semantic HUD, pause/disposal and coordinated responsive reflow have browser checks. Combat, damage/score, AI and completion are now implemented; typed HTTP, paginated data and durable recovery are now implemented in the data candidate.
 
 The build uses Vite and plain CSS. TypeScript 6.0.3 remains within the installed typescript-eslint 8.71.0 peer range (`>=4.8.4 <6.1.0`). Dependency versions are not changed by the governance migration.
 
@@ -56,7 +56,7 @@ Load only assets needed for the current screen through explicit Vite URLs. Cache
 
 ## Ranking, history and the outbox
 
-Proposed REST resources: `GET /api/ranking?rulesetId=...&page=...`, `GET /api/players/:playerId/matches?page=...`, and `POST /api/matches`. Validate pagination and payloads at the boundary. A record includes the full config snapshot; a canonical ruleset fingerprint includes every balance parameter affecting comparison, not just match duration. Rank within the same ruleset by score descending, effective duration ascending, completion timestamp ascending, then match ID ascending. This is a deterministic tie policy to document and test.
+Proposed REST resources: `GET /api/ranking?rulesetId=...&page=...`, `GET /api/players/:playerId/matches?page=...`, and `POST /api/matches`. Validate pagination and payloads at the boundary. A record includes the full config snapshot; a canonical ruleset fingerprint includes every balance parameter affecting comparison, not just match duration. Rank within the same ruleset by score descending, effective duration descending, completion timestamp ascending, then match ID ascending. This is a deterministic tie policy to document and test.
 
 Use one persistent mock database indexed by match ID. Ranking and history are projections of that database, so registering a match never writes two independent copies. A duplicate ID with the same result returns the stored record. A conflicting payload for an existing ID returns an explicit conflict response.
 
@@ -83,3 +83,9 @@ Positions and active time remain simulation-owned. No geometry is redistributed 
 All weapons, enemy roles, hull/spawn values and timing are in the immutable MatchConfig. Swept cannonball segments test rounded coasts and ship capsules, choose the first impact, consume once and deactivate destroyed ships immediately. Chasers award no point on impact; player kills increment once. Spawn attempts are bounded and both types alternate. A* handles obstructed routes; final movement still checks actual geometry. Pixi visual events cannot apply damage. Renderer interpolation and bounded effects use active simulation time, while coordinated reflow uses presentation time.
 
 A matching unique mount owns its audio voices, preventing an obsolete Strict Mode completion from stopping a replacement's loops. Source nodes are single-use, decoded buffers shared, twelve effects/two loops bounded, pause/reflow suspends combat audio. Completion persists a validated immutable CompletedRecord plus outbox in one IndexedDB transaction before future submission. Storage/network boundaries validate schema, finite values, names, configuration, pagination and duration; checks are not added to every simulation frame.
+
+## Implemented transport, mocks and outbox
+
+SubmissionService is application-owned and uses Query mutation execution independently of result-screen mounting. Its in-flight Map joins repeated attempts for one match ID; IndexedDB transactions persist results before submission and canonical records by ID on the mock side. Same payload/ID returns the original record; conflict is HTTP 409. Revision-bearing paginated queries derive from one mock database, with explicit AbortSignal/4000-ms Axios transport and bounded Query retries. Registration checks the canonical full configuration SHA-256 ruleset, and acknowledgement equality before durable removal.
+
+Fixtures, endpoint handlers and scenario plans are shared by the browser and injected Node store. Scenario latency/phase/counters are deterministic and reads capture their revision before delay. Commit-then-timeout commits before withholding its first response; retry returns that record. Browser service-worker startup is shared and failure does not gate local play. Epoch checks prevent obsolete scenario responses/commits after reset. The reset UI cancels client operations before scoped IndexedDB/cache reset and leaves preferences intact.
