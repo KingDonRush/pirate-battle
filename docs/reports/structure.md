@@ -42,6 +42,16 @@ Main protection is configured and read back: required PR, up-to-date `verify` ch
 
 The disposable checkout and its generated dependencies/build/reports were removed and its worktree unregistered. Owned research/download, local builds/reports and their cleanup record were removed. Preparation branches were deleted only after integration checks. Source/dependencies/assets and other tasks' resources were preserved. Test-server ports were closed, while the unrelated 4173 server remained. No unresolved task hygiene resource remains. Game acceptance and deployment remain Pending in [the matrix](../acceptance.md).
 
-## Closed task state
+## Original structural handoff observation
 
-The parent and five sub-Issues are closed as `completed`; all six Project items are Done. No task is active and no game work has started. The checkpoint references actual verification and live sources. Issue history/PRs/Actions preserve what changed, why and when; technical memory carries recovery context without private conversations or a parallel backlog.
+At the original handoff, parent #1 and five sub-Issues were closed as `completed`, and their six Project items were Done. No game work was started. Issue history/PRs/Actions preserve what changed, why and when; technical memory carries recovery context without private conversations or a parallel backlog. Later task state must be read from live GitHub.
+
+## GitHub discipline correction — October 2, 2026
+
+[Issue #10](https://github.com/KingDonRush/pirate-battle/issues/10) addresses an execution gap: #6 closed at 13:33:33 UTC and #1 at 13:34:17 UTC, before final documentation PR #9 opened at 13:40:37 UTC, merged at 13:42:42 UTC and its main CI completed at 13:44:07 UTC. The final delivered state passed verification, but the task closure sequence was early. Those timestamps/history are preserved.
+
+The revised policy distinguishes ready for integration from completed without adding Project states. It requires integrated acceptance, delivered documentation and owned-resource cleanup before an explicit completion comment/closure. Implementation PRs use non-closing Issue references. Milestones name start, material scope change, concrete block, approach-changing failure, validation and closure; templates prompt the same evidence.
+
+The Project's enabled Auto-close issue workflow was removed using the documented GraphQL API after resolving its exact identity. All five other workflow IDs/names/enabled states matched before/after. There is no new synchronization service, helper or token copy. [The workflow API](https://docs.github.com/en/graphql/reference/projects#deleteprojectv2workflow) and [native automation behavior](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-built-in-automations) are the primary references.
+
+At this documentation observation, #10 remains open/In progress and candidate/integrated CI is still required. Its final verification, closure reason and Project reconciliation will be recorded on the live Issue after the gates pass. The checkpoint remains truthful to its observation instead of predicting closure. These policy/template checks do not prove future agents always comply or replace manual semantic review.
