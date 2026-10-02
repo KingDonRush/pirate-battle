@@ -5,7 +5,7 @@
 ## Observation: October 2, 2026
 
 - Objective: complete structural governance and verification only, under [Issue #1](https://github.com/KingDonRush/pirate-battle/issues/1).
-- Branch observed: `chore/agent-kernel`; base revision `01d5db73e5d16f525d5e7953fa50af5c6a0e8dfd`. The migration is an uncommitted working tree; do not infer current HEAD from this observation.
+- Branch observed: `chore/agent-kernel`; base revision `01d5db73e5d16f525d5e7953fa50af5c6a0e8dfd`. The migration is committed at `387849b04b1d1f48ad325b2fe549210d37473c39` and proposed by [PR #8](https://github.com/KingDonRush/pirate-battle/pull/8). Read its live head; this checkpoint commit will change the branch revision.
 - Baseline: [PR #7](https://github.com/KingDonRush/pirate-battle/pull/7) merged; [#2](https://github.com/KingDonRush/pirate-battle/issues/2) completed. The public fork retains the company's ancestry.
 - Active owners: [kernel/conformity #3](https://github.com/KingDonRush/pirate-battle/issues/3), [disciplines #4](https://github.com/KingDonRush/pirate-battle/issues/4), [organization/memory #5](https://github.com/KingDonRush/pirate-battle/issues/5). [Validation/integration #6](https://github.com/KingDonRush/pirate-battle/issues/6) remains pending.
 - Tracking: [public Project](https://github.com/users/KingDonRush/projects/1) linked to the fork, with six structural Issues, the required statuses and P0/P1/P2. This checkpoint is not a second backlog.
@@ -20,6 +20,6 @@ Architecture proposals are owned by [ARCHITECTURE.md](../../ARCHITECTURE.md). Al
 
 ## Next action inside this task
 
-Review the staged migration and open/attach the solution PR, verify protected integration and clean reproduction, then reconcile live Issues/Project and close owned resources. Do not open the first playable task.
+Verify PR #8 against its live head, integrate through protected main and reproduce a clean checkout, then reconcile live Issues/Project and close owned resources. Do not open the first playable task.
 
 Host hygiene records are private operational cleanup state, outside Git. They contain exact owned temporary resources; inspect the configured record before creating substitutes. They are not technical memory or task history.
