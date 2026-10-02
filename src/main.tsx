@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from './App';
 import './styles.css';
+import { AudioService } from './game/audio';
+import { readSettings } from './game/config';
 
 const queryClient = new QueryClient();
 
@@ -11,12 +13,14 @@ async function bootstrap() {
   if (!root) throw new Error('Application root is missing.');
 
   const { startMockWorker } = await import('./mocks/browser');
-  await startMockWorker();
+  void startMockWorker().catch(() => {});
+  const audio = new AudioService(readSettings());
+  if (import.meta.hot) import.meta.hot.dispose(() => audio.dispose());
 
   createRoot(root).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <App audio={audio} />
       </QueryClientProvider>
     </StrictMode>,
   );
