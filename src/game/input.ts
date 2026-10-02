@@ -26,7 +26,7 @@ export class InputController {
       !this.enabled ||
       event.repeat ||
       (event.target instanceof HTMLElement &&
-        event.target.closest('input,textarea,select,button,[contenteditable]'))
+        event.target.closest('input,textarea,select,dialog,[contenteditable]'))
     )
       return;
     if (event.code === 'Escape') {
@@ -34,6 +34,12 @@ export class InputController {
       this.pause();
       return;
     }
+    if (
+      event.code === 'Space' &&
+      event.target instanceof HTMLElement &&
+      event.target.closest('button')
+    )
+      return;
     const action = KEYS[event.code];
     if (action) {
       event.preventDefault();

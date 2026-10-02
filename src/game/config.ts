@@ -22,18 +22,47 @@ export const LEVEL = Object.freeze({
   width: 960,
   height: 640,
   version: 'islands-v1',
-  islands: [
-    { x: 192, y: 128, width: 160, height: 160, radius: 28 },
-    { x: 592, y: 352, width: 160, height: 160, radius: 28 },
-  ],
+  islands: Object.freeze(
+    [
+      { x: 192, y: 128, width: 160, height: 160, radius: 28 },
+      { x: 592, y: 352, width: 160, height: 160, radius: 28 },
+    ].map((island) => Object.freeze(island)),
+  ),
 });
 
+export type WeaponConfig = Readonly<{
+  damage: number;
+  speed: number;
+  lifetime: number;
+  cooldown: number;
+  radius: number;
+}>;
+export type EnemyConfig = Readonly<{
+  health: number;
+  speed: number;
+  turnSpeed: number;
+  range: number;
+}>;
 export type MatchConfig = Readonly<{
   version: 1;
   level: typeof LEVEL;
   duration: number;
   spawnInterval: number;
   player: Readonly<{ health: number; speed: number; turnSpeed: number }>;
+  weapons: Readonly<{
+    front: WeaponConfig;
+    left: WeaponConfig;
+    right: WeaponConfig;
+    enemy: WeaponConfig;
+  }>;
+  enemies: Readonly<{ chaser: EnemyConfig; shooter: EnemyConfig }>;
+  spawn: Readonly<{
+    minimumDistance: number;
+    warningTime: number;
+    retryTime: number;
+    distribution: readonly ('chaser' | 'shooter')[];
+  }>;
+  chaserImpact: number;
   hull: Readonly<{
     radius: number;
     halfLength: number;
@@ -48,6 +77,57 @@ export function createConfig(settings: Settings): MatchConfig {
     duration: settings.duration,
     spawnInterval: settings.spawnInterval,
     player: Object.freeze({ health: 100, speed: 150, turnSpeed: Math.PI }),
+    weapons: Object.freeze({
+      front: Object.freeze({
+        damage: 20,
+        speed: 400,
+        lifetime: 1.5,
+        cooldown: 0.35,
+        radius: 5,
+      }),
+      left: Object.freeze({
+        damage: 20,
+        speed: 420,
+        lifetime: 1.4,
+        cooldown: 1.2,
+        radius: 5,
+      }),
+      right: Object.freeze({
+        damage: 20,
+        speed: 420,
+        lifetime: 1.4,
+        cooldown: 1.2,
+        radius: 5,
+      }),
+      enemy: Object.freeze({
+        damage: 15,
+        speed: 260,
+        lifetime: 2.4,
+        cooldown: 1.5,
+        radius: 5,
+      }),
+    }),
+    enemies: Object.freeze({
+      chaser: Object.freeze({
+        health: 40,
+        speed: 95,
+        turnSpeed: (Math.PI * 2) / 3,
+        range: 0,
+      }),
+      shooter: Object.freeze({
+        health: 60,
+        speed: 75,
+        turnSpeed: Math.PI / 2,
+        range: 300,
+      }),
+    }),
+    spawn: Object.freeze({
+      minimumDistance: 360,
+      warningTime: 0.5,
+      retryTime: 0.25,
+      distribution: Object.freeze(['chaser', 'shooter'] as const),
+    }),
+    chaserImpact: 25,
     hull: Object.freeze({ radius: 24, halfLength: 28, boundaryMargin: 40 }),
   });
 }
@@ -110,6 +190,8 @@ export function saveSettings(settings: Settings) {
 
 export type PlayerIdentity = Readonly<{ id: string; name: string }>;
 export function validateName(text: string): string | null {
+  if (/[\p{Cc}\p{Cf}]/u.test(text))
+    return 'Names cannot contain control characters.';
   const name = text.normalize('NFC').trim().replace(/\s+/gu, ' ');
   const length = [
     ...new Intl.Segmenter('en', { granularity: 'grapheme' }).segment(name),
@@ -144,6 +226,10 @@ export function readPlayer(): PlayerIdentity | null {
   }
 }
 export function choosePlayer(text: string, guest = false): PlayerIdentity {
+  if (!guest && text.trim()) {
+    const error = validateName(text);
+    if (error) throw new Error(error);
+  }
   let name = text.normalize('NFC').trim().replace(/\s+/gu, ' ');
   if (guest || !name) {
     const adjectives = [

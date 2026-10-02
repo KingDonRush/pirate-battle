@@ -29,10 +29,22 @@ export default defineConfig({
     serviceWorkers: 'allow',
   },
   projects: [
-    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium-desktop',
+      testIgnore: '**/focus.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+    },
     {
       name: 'chromium-mobile',
+      testIgnore: '**/focus.spec.ts',
       use: { ...devices['Pixel 7'], defaultBrowserType: 'chromium' },
+    },
+    {
+      name: 'chromium-focus',
+      testMatch: '**/focus.spec.ts',
+      fullyParallel: false,
+      dependencies: ['chromium-desktop', 'chromium-mobile'],
+      use: { ...devices['Desktop Chrome'], headless: false },
     },
   ],
   webServer: {

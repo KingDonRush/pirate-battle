@@ -125,3 +125,87 @@ export function canOccupy(
   }
   return true;
 }
+
+export function castIsland(
+  a: Point,
+  b: Point,
+  island: Rect,
+  radius = 0,
+): number | null {
+  const round = island.radius ?? 0,
+    candidates: (number | null)[] = [
+      segmentRect(a, b, {
+        x: island.x + round,
+        y: island.y - radius,
+        width: island.width - 2 * round,
+        height: island.height + 2 * radius,
+      }),
+      segmentRect(a, b, {
+        x: island.x - radius,
+        y: island.y + round,
+        width: island.width + 2 * radius,
+        height: island.height - 2 * round,
+      }),
+    ];
+  for (const x of [island.x + round, island.x + island.width - round])
+    for (const y of [island.y + round, island.y + island.height - round])
+      candidates.push(segmentCircle(a, b, { x, y }, round + radius));
+  return candidates.reduce<number | null>(
+    (nearest, value) =>
+      value !== null && (nearest === null || value < nearest) ? value : nearest,
+    null,
+  );
+}
+export function castHull(
+  a: Point,
+  b: Point,
+  ship: Point & { heading: number },
+  radius: number,
+  halfLength: number,
+) {
+  const [front, back] = hullEnds(ship, ship.heading, halfLength);
+  const local = (point: Point) => {
+    const dx = point.x - ship.x,
+      dy = point.y - ship.y,
+      c = Math.cos(ship.heading),
+      s = Math.sin(ship.heading);
+    return { x: dx * c + dy * s, y: -dx * s + dy * c };
+  };
+  const hits = [
+    segmentCircle(a, b, front, radius),
+    segmentCircle(a, b, back, radius),
+    segmentRect(local(a), local(b), {
+      x: -radius,
+      y: -halfLength,
+      width: radius * 2,
+      height: halfLength * 2,
+    }),
+  ];
+  return hits.reduce<number | null>(
+    (nearest, t) =>
+      t !== null && (nearest === null || t < nearest) ? t : nearest,
+    null,
+  );
+}
+export function hullsTouch(
+  a: Point & { heading: number },
+  b: Point & { heading: number },
+  radius: number,
+  halfLength: number,
+) {
+  const [a1, a2] = hullEnds(a, a.heading, halfLength),
+    [b1, b2] = hullEnds(b, b.heading, halfLength);
+  return (
+    castHull(a1, a2, b, radius * 2, halfLength) !== null ||
+    Math.min(
+      pointSegmentDistance(a1, b1, b2),
+      pointSegmentDistance(a2, b1, b2),
+      pointSegmentDistance(b1, a1, a2),
+      pointSegmentDistance(b2, a1, a2),
+    ) <=
+      radius * 2
+  );
+}
+export function angleDifference(target: number, current: number) {
+  return Math.atan2(Math.sin(target - current), Math.cos(target - current));
+}

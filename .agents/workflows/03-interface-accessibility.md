@@ -10,6 +10,8 @@ Selected entrypoints: [React components/state](../skills/react-engineering/SKILL
 
 Use researched React component/state/composition material, supplied visual assets, and the W3C keyboard/focus/tabs/dialog/target-size guidance. Read the relevant Pixi Sprite/Graphics/Text material for overlays and effects. Performance rules are applied according to the actual update frequency and visible behavior.
 
+Use [browser audio](../skills/browser-audio/SKILL.md) for gesture, buffer/voice, clock and ownership cases. The game mix and visible feedback remain in this workflow.
+
 ## Decisions and execution
 
 1. Map menu, options, active combat, pause, result, ranking and history to their actual actions and states. English copy states what happened and the available next action. Play is the primary menu action; during combat keep health, score, remaining time, pause and input readable.

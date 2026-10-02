@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { loadGameAssets } from '../game/assets';
 import type { AudioService } from '../game/audio';
 import type { Action } from '../game/input';
@@ -13,7 +19,10 @@ import leftIcon from '../../assets/png/retina/ui/controls/icon_fire_left.png?url
 import rightIcon from '../../assets/png/retina/ui/controls/icon_fire_right.png?url';
 declare global {
   interface Window {
-    pirateBattle?: { observe: () => ReturnType<GameRuntime['observe']> };
+    pirateBattle?: {
+      observe: () => ReturnType<GameRuntime['observe']>;
+      advance: (milliseconds: number) => void;
+    };
   }
 }
 function Control({
@@ -71,12 +80,15 @@ function Control({
 function Battle({
   runtime,
   onExit,
+  options,
 }: {
   runtime: GameRuntime;
   onExit: () => void;
+  options: (close: () => void) => ReactNode;
 }) {
   const hud = useSyncExternalStore(runtime.subscribe, runtime.getSnapshot);
   const [confirm, setConfirm] = useState(false);
+  const [editingOptions, setEditingOptions] = useState(false);
   const mins = Math.floor(hud.remaining / 60),
     secs = String(hud.remaining % 60).padStart(2, '0');
   return (
@@ -188,7 +200,7 @@ function Battle({
             ? 'Battle running'
             : ''}
       </p>
-      {hud.state === 'paused' && !confirm ? (
+      {hud.state === 'paused' && !confirm && !editingOptions ? (
         <Dialog title="Paused">
           <p>
             {hud.reason === 'Paused'
@@ -199,10 +211,24 @@ function Battle({
             <button className="primary" onClick={() => runtime.resume()}>
               Resume
             </button>
+            <button
+              className="secondary"
+              onClick={() => setEditingOptions(true)}
+            >
+              Options
+            </button>
             <button className="secondary" onClick={() => setConfirm(true)}>
               Main Menu
             </button>
           </div>
+        </Dialog>
+      ) : null}
+      {editingOptions ? (
+        <Dialog
+          title="Battle options"
+          onCancel={() => setEditingOptions(false)}
+        >
+          {options(() => setEditingOptions(false))}
         </Dialog>
       ) : null}
       {confirm ? (
@@ -227,18 +253,25 @@ export function GameScreen({
   reducedMotion,
   onExit,
   onFinish,
+  options,
 }: {
   session: MatchSession;
   audio: AudioService;
   reducedMotion: boolean;
   onExit: () => void;
   onFinish: (result: CompletedLocalMatch) => void;
+  options: (close: () => void) => ReactNode;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const motion = useRef(reducedMotion);
   const [runtime, setRuntime] = useState<GameRuntime | null>(null);
   const [progress, setProgress] = useState(0),
     [error, setError] = useState<string | null>(null),
     [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    motion.current = reducedMotion;
+    runtime?.setReducedMotion(reducedMotion);
+  }, [reducedMotion, runtime]);
   useEffect(() => {
     let obsolete = false,
       owned: GameRuntime | undefined;
@@ -254,7 +287,7 @@ export function GameScreen({
           session,
           assets,
           audio,
-          reducedMotion,
+          motion.current,
           onFinish,
         );
         await owned.init();
@@ -265,7 +298,10 @@ export function GameScreen({
         setRuntime(owned);
         element.focus();
         const accepted = owned;
-        window.pirateBattle = { observe: () => accepted.observe() };
+        window.pirateBattle = {
+          observe: () => accepted.observe(),
+          advance: (milliseconds) => accepted.advance(milliseconds),
+        };
       })
       .catch((cause: unknown) => {
         owned?.dispose();
@@ -282,7 +318,7 @@ export function GameScreen({
         delete window.pirateBattle;
       owned?.dispose();
     };
-  }, [session, audio, reducedMotion, onFinish, attempt]);
+  }, [session, audio, onFinish, attempt]);
   return (
     <main className="game-shell">
       <div
@@ -292,7 +328,7 @@ export function GameScreen({
         aria-label="Battle arena. W to move, A and D to turn. Space, Q and E to fire. Escape to pause."
       />
       {runtime ? (
-        <Battle runtime={runtime} onExit={onExit} />
+        <Battle runtime={runtime} onExit={onExit} options={options} />
       ) : (
         <section className="wood-panel loading-panel" aria-live="polite">
           <h2>{error ? 'The arena could not load' : 'Preparing the battle'}</h2>

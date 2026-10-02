@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   choosePlayer,
   createConfig,
@@ -12,6 +12,8 @@ import type { AudioService } from './game/audio';
 import type { CompletedLocalMatch } from './game/runtime';
 import type { MatchSession } from './game/simulation';
 import { GameScreen } from './ui/GameScreen';
+import { completedRecord, localResult } from './data/contracts';
+import { latestResult, persistResult } from './data/database';
 import titleUrl from '../assets/png/retina/ui/menu/title_pirate_battle.png?url';
 import logoUrl from '../assets/logo_jungle_gaming.svg?url';
 
@@ -24,13 +26,54 @@ export function App({ audio }: { audio: AudioService }) {
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<MatchSession | null>(null);
   const [result, setResult] = useState<CompletedLocalMatch | null>(null);
-  const finish = useCallback((completed: CompletedLocalMatch) => {
-    setResult(completed);
-    setSession(null);
-    setScreen('result');
+  const [saveState, setSaveState] = useState<'saving' | 'pending' | 'error'>(
+    'pending',
+  );
+  useEffect(() => {
+    let obsolete = false;
+    void latestResult()
+      .then((record) => {
+        if (obsolete || !record) return;
+        setResult(localResult(record));
+        if (localStorage.getItem('pirate-battle:view') === 'result')
+          setScreen('result');
+      })
+      .catch(() => {
+        if (!obsolete)
+          setError(
+            'Previous results could not be read. Browser storage is unavailable.',
+          );
+      });
+    return () => {
+      obsolete = true;
+    };
   }, []);
+  const saveResult = useCallback((completed: CompletedLocalMatch) => {
+    setSaveState('saving');
+    void completedRecord(completed)
+      .then(persistResult)
+      .then(() => setSaveState('pending'))
+      .catch(() => setSaveState('error'));
+  }, []);
+  const finish = useCallback(
+    (completed: CompletedLocalMatch) => {
+      const immutable = Object.freeze(completed);
+      setResult(immutable);
+      setSession(null);
+      setScreen('result');
+      try {
+        localStorage.setItem('pirate-battle:view', 'result');
+      } catch {
+        /* The explicit save state below reports durable storage failure. */
+      }
+      saveResult(immutable);
+      queueMicrotask(() => audio.result(completed.reason));
+    },
+    [audio, saveResult],
+  );
   const exit = useCallback(() => {
     setSession(null);
+    localStorage.setItem('pirate-battle:view', 'menu');
     setScreen('menu');
   }, []);
   function play(guest = false) {
@@ -41,6 +84,7 @@ export function App({ audio }: { audio: AudioService }) {
         seedText !== null && /^\d{1,10}$/.test(seedText)
           ? Number(seedText)
           : (crypto.getRandomValues(new Uint32Array(1))[0] ?? 1);
+      localStorage.setItem('pirate-battle:view', 'menu');
       setName(player.name);
       setError(null);
       audio.unlock();
@@ -74,6 +118,18 @@ export function App({ audio }: { audio: AudioService }) {
         }
         onExit={exit}
         onFinish={finish}
+        options={(close) => (
+          <Options
+            initial={settings}
+            onCancel={close}
+            onSave={(next) => {
+              saveSettings(next);
+              setSettings(next);
+              audio.update(next);
+              close();
+            }}
+          />
+        )}
       />
     );
   return (
@@ -101,6 +157,21 @@ export function App({ audio }: { audio: AudioService }) {
               <span>points</span>
             </p>
             <p>{result.session.player.name}</p>
+            <p role="status">
+              {saveState === 'saving'
+                ? 'Saving on this device…'
+                : saveState === 'pending'
+                  ? 'Stored on this device. Registration pending.'
+                  : 'Result could not be stored. Try again.'}
+            </p>
+            {saveState === 'error' ? (
+              <button
+                className="text-button"
+                onClick={() => saveResult(result)}
+              >
+                Try again
+              </button>
+            ) : null}
             <p>
               {Math.floor(result.duration / 60)}:
               {String(Math.floor(result.duration % 60)).padStart(2, '0')} played
@@ -110,7 +181,7 @@ export function App({ audio }: { audio: AudioService }) {
               <button className="primary" onClick={() => play()}>
                 Play Again
               </button>
-              <button className="secondary" onClick={() => setScreen('menu')}>
+              <button className="secondary" onClick={exit}>
                 Main Menu
               </button>
             </div>
@@ -166,6 +237,14 @@ export function App({ audio }: { audio: AudioService }) {
                 </button>
               </div>
             </form>
+            {result ? (
+              <button
+                className="text-button last-result"
+                onClick={() => setScreen('result')}
+              >
+                Last result
+              </button>
+            ) : null}
             <details className="instructions">
               <summary>How to play</summary>
               <p>

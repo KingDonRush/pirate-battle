@@ -46,6 +46,9 @@ export function viewToWorld(x: number, y: number, view: ViewTransform) {
   };
 }
 export class ReflowCoordinator {
+  setReducedMotion(value: boolean) {
+    this.reducedMotion = value;
+  }
   revision = 0;
   active = true;
   private measuredAt = 0;
