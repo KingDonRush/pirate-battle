@@ -1,27 +1,26 @@
 # Current technical checkpoint
 
-> **Read contract:** last observed context, not task truth or authorization. On resume consult live GitHub, actual branch/diff/revision and owned-resource state, then select [the applicable intent](../index.md). Relevant later changes invalidate affected evidence.
+> **Read contract:** this is a dated observation, not live task state or authorization. On resume consult the linked Issue/PR, Project and actual branch/diff/revision, then select [the current intent](../index.md). Resolve later merge/CI/closure events from GitHub.
 
-## Closed observation: October 2, 2026
+## Observation: October 2, 2026 — GitHub discipline refinement
 
-**Structural preparation is completed. No task is active and no game work has started.**
+- Objective: [Issue #10](https://github.com/KingDonRush/pirate-battle/issues/10), tighten completion gates, milestone records and board-driven closure.
+- Observed task state: open / In progress, P1. No gameplay or deployment task is selected.
+- Branch: codex/github-completion-discipline, based on main bdb3c474058d1cc5e600a6e4cf16df820a7f63c7. The current tree contains the policy/template changes; read actual HEAD for later revisions.
+- Project fact: Auto-close issue was removed through the supported GraphQL API. The five other workflow IDs/names/enabled states were compared before/after and remained unchanged.
+- Documentation: the policy separates ready for integration from completed, requires final acceptance/documentation/cleanup before explicit closure and defines meaningful milestone/completion payloads.
+- Hypotheses: none promoted to facts. Templates and structural checks do not prove semantic acceptance.
 
-[Issue #1](https://github.com/KingDonRush/pirate-battle/issues/1) and five sub-Issues #2–#6 are closed as completed; the [public Project](https://github.com/users/KingDonRush/projects/1) records Done. Reconcile future state there instead of treating this checkpoint as a backlog.
+## Evidence and remaining gate
 
-Verified structural source: main merge ef9a4ba88f4c53c9a8b62fe9f3fd745f4698b122 from [PR #8](https://github.com/KingDonRush/pirate-battle/pull/8), after [baseline PR #7](https://github.com/KingDonRush/pirate-battle/pull/7). Closure documentation changes HEAD; read the real revision and latest Actions for new signoff. This observation does not claim its own final commit hash.
+Earlier structural preparation passed [main CI](https://github.com/KingDonRush/pirate-battle/actions/runs/37014857563) at the observed base. It is historical evidence for the changing instruction tree. Local structural checks passed (three existing tests, 45 own Markdown files and seven weighted procedures), formatting/diff checks passed and the frozen brief hash matches. Manual review confirmed that a merged PR with pending main CI or undelivered acceptance documentation must leave the task open/In progress. Candidate PR CI, protected merge and integrated-main verification remain required.
 
-## Facts and evidence
+The task must stay open/In progress until all acceptance and owned-resource cleanup pass. Its final completion record belongs in the Issue, with actual source/check links. The versioned checkpoint can predate that event; it does not need another commit merely to mirror GitHub closure.
 
-- The kernel/index, seven weighted procedures, common engineering/Git/compliance policies and frozen company reference are integrated.
-- Fork/remotes, public table/options, native task hierarchy/dependencies and main protection were read back.
-- [Integrated structural CI](https://github.com/KingDonRush/pirate-battle/actions/runs/37013012387) passed at the verified merge.
-- A clean detached checkout passed install, structural/lint/type/format/build checks, two production startup cases and two development Strict Mode startup cases. [The structural report](../../docs/reports/structure.md) owns commands, source identities, scenarios and limits.
-- The temporary checkout, owned research/build/report intermediates and merged preparation branches were removed. Verification servers exited; other tasks' resources were preserved. The task's host cleanup record has no remaining entries.
+## Reentry inside the authorized scope
 
-No active technical hypotheses exist. Architecture proposals remain in [ARCHITECTURE.md](../../ARCHITECTURE.md); all game acceptance remains Pending in [the matrix](../../docs/acceptance.md). Readiness checks do not establish gameplay, accessibility, profiling or published-game coverage.
+Read Issue #10 and current checks. If it remains open, continue its concrete remaining gate; if it is completed, there is no successor task selected. A new material task requires its own current objective. Never close early to write a future closed-state snapshot.
 
-## Scope and reentry
+The [Git/GitHub policy](../policies/git-github.md) owns the procedure; [durable references](decisions.md) explain maintained choices. Game architecture proposals remain in [ARCHITECTURE.md](../../ARCHITECTURE.md), and game acceptance remains Pending in [the matrix](../../docs/acceptance.md). No game work, deployment or next playable Issue is part of this refinement.
 
-No gameplay, deployment or next playable Issue was started. No local tasks/RUN ledger exists. There is no next action selected for the completed task; later user instructions define further work.
-
-Recover the kernel/index, live task state and tree before future action. Preserve company compliance, current authorization, public technical/private-data boundaries and source-review limits. Use the host's pending-resource record only for owned resources needing closure; a read-only question creates no cleanup record.
+The owned review branch is tracked in the host's task-specific hygiene record until its integrated local/remote refs are removed. Use that prescribed record only for owned resources requiring later closure. Preserve other tasks' resources; source, lockfile, dependency versions and the frozen company brief are unchanged.

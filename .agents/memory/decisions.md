@@ -13,4 +13,10 @@
 | Keep external provenance and bounded review           | [Qualification](../research/skill-qualification.md) owns reviewed payloads, exceptions and source limitations.                                                                                                                                                             | Payload/version changes invalidate affected review; no publisher can grant execution authority.                | Current |
 | Structural handoff ends before game work              | [Issue #1](https://github.com/KingDonRush/pirate-battle/issues/1) owns this scope. Readiness is not game coverage.                                                                                                                                                         | A later user task defines the long implementation plan and first playable objective.                           | Current |
 
-Recorded October 2, 2026 from actual setup and the authorized structural task. Timing of earlier unrecorded actions is not reconstructed. Design proposals are not copied here as implemented decisions.
+## Completion discipline refinement
+
+The [Git/GitHub policy](../policies/git-github.md) owns the completion gate and milestone payloads. [Issue #10](https://github.com/KingDonRush/pirate-battle/issues/10) records the authorized correction: ready for integration remains open/In progress; closure follows delivered acceptance, integrated-revision checks and owned-resource cleanup. Board status cannot close Issues automatically.
+
+A versioned checkpoint can record observed pending integration/closure. Live GitHub owns the later event. Do not close early to invent a final snapshot or add a metadata-only PR solely to synchronize task state. Review this decision if the acceptance model or Project automation changes.
+
+Recorded October 2, 2026 from actual setup and authorized structural work. Timing of earlier unrecorded actions is not reconstructed. Design proposals are not copied here as implemented decisions.
