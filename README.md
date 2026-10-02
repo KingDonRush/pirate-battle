@@ -4,7 +4,7 @@
 
 Preparation for the Jungle Gaming [game developer challenge](https://github.com/junglegaming/game-developer-challenge). The original brief is preserved in [CHALLENGE.md](CHALLENGE.md).
 
-**Current state:** the first playable slice has a supplied-art Pixi arena, name/guest entry, persistent options, real forward/rotation and hull collisions, simultaneous touch input, manual/blur/hidden pause, and animated coordinated reflow across desktop, portrait and landscape. Combat, durable match registration, data tabs and final profiling/publication are in the open delivery [Issue #12](https://github.com/KingDonRush/pirate-battle/issues/12). Partial checks do not award rubric points.
+**Current state:** the first playable slice has a supplied-art Pixi arena, name/guest entry, persistent options, real forward/rotation and hull collisions, simultaneous touch input, manual/blur/hidden pause, and animated coordinated reflow across desktop, portrait and landscape. Durable HTTP registration, data tabs and final profiling/publication are in the open delivery [Issue #12](https://github.com/KingDonRush/pirate-battle/issues/12). Partial checks do not award rubric points.
 
 ## Setup
 
@@ -62,8 +62,12 @@ Controls, gameplay configuration, network scenario selection/reset and failure r
 
 ## Current controls and responsive behavior
 
-W/Arrow Up advances; A/D or Left/Right rotate. Escape or Pause freezes play; Resume is explicit. Touch movement includes diagonal advance/turn targets with independent contacts. Space, Q and E are reserved for the next combat slice. Name is optional; Play as guest chooses a readable local name without changing combat seed. Options accept 60–180 integer seconds and 0.75–10-second spawns in 0.25 steps; changes apply to new matches.
+W/Arrow Up advances; A/D or Left/Right rotate. Escape or Pause freezes play; Resume is explicit. Touch movement includes diagonal advance/turn targets with independent contacts. Space fires forward; Q/E fire three parallel cannonballs from the left/right broadside. Chasers pursue and explode on contact without awarding a point; Shooters approach and fire within range. Each player kill is one point. Name is optional; Play as guest chooses a readable local name without changing combat seed. Options accept 60–180 integer seconds and 0.75–10-second spawns in 0.25 steps; changes apply to new matches.
 
 Resize or orientation freezes active time and input, animates the complete arena transform, then resumes only after the current layout has settled and rendered. A manual/focus pause remains paused. Portrait and landscape use identical physical geometry. Audio loops start from Play, pause with the match and release session voices on exit.
 
 A read-only `window.pirateBattle.observe()` projection exposes state for browser checks; `?seed=42` selects a reproducible combat seed. Tests never change world outcomes through that projection.
+
+Completed time/death results and their original name/config are written to IndexedDB before registration. Refresh restores the last result; Play Again creates a new identity and clean world. Pause Options applies combat changes only to the next match. Audio uses bounded supplied effects, at most two loops and twelve effect voices.
+
+For long browser rule checks, `?seed=42&clock=manual` suspends automatic simulation time and permits `window.pirateBattle.advance(milliseconds)`. It advances the same runtime accumulator, input, rules, collisions and rendering in bounded increments; it cannot set world fields or force outcomes. Ordinary play and profiling use real time. Native visibility checks use a headed Chromium project under `xvfb-run -a npm run check` on Linux; it creates actual background tabs and disables Playwright's focus emulation.

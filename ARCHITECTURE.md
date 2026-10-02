@@ -2,7 +2,7 @@
 
 > **Read contract:** solution documentation; proposals and verified behavior are distinguished below. Recover uncertain task context through [the index](.agents/index.md); the [company brief](CHALLENGE.md) governs material requirements.
 
-Status: first playable slice implemented. Movement/capsule-island collision, input ownership, loading/retry, cached semantic HUD, pause/disposal and coordinated responsive reflow have browser checks. Combat and data sections below remain proposals until their owning Issues ship.
+Status: first playable slice implemented. Movement/capsule-island collision, input ownership, loading/retry, cached semantic HUD, pause/disposal and coordinated responsive reflow have browser checks. Combat, damage/score, AI and completion are now implemented; remote data/recovery sections remain proposals until their owning Issues ship.
 
 The build uses Vite and plain CSS. TypeScript 6.0.3 remains within the installed typescript-eslint 8.71.0 peer range (`>=4.8.4 <6.1.0`). Dependency versions are not changed by the governance migration.
 
@@ -77,3 +77,9 @@ Use the optimized build for a 180-second profiling run and five start/play/exit 
 The physical world is 960×640 units with two rounded-rectangle islands. A portrait presentation rotates the complete world by π/2 and fits its current transformed bounds uniformly; intermediate animation bounds fit too. The input transform is the inverse of the same ViewTransform. ReflowCoordinator replaces obsolete resize destinations, freezes active simulation/input/audio, and waits for the latest dimensions and angle to agree for two rendered frames and at least 100 ms of stability. Presentation animation lasts 220 ms; reduced motion skips displacement. Paused reasons override automatic reflow continuation. Runtime uses a private ticker and manually renders before the readiness check.
 
 Positions and active time remain simulation-owned. No geometry is redistributed and no collision occurs due to reflow. Capsule hulls use the same island position/radius as rendering. The private app initialization rejects late mounting; cleanup removes its canvas, handlers and observers while shared asset textures remain reusable. Session audio is released only by its matching owner.
+
+## Implemented combat and completed-result boundary
+
+All weapons, enemy roles, hull/spawn values and timing are in the immutable MatchConfig. Swept cannonball segments test rounded coasts and ship capsules, choose the first impact, consume once and deactivate destroyed ships immediately. Chasers award no point on impact; player kills increment once. Spawn attempts are bounded and both types alternate. A* handles obstructed routes; final movement still checks actual geometry. Pixi visual events cannot apply damage. Renderer interpolation and bounded effects use active simulation time, while coordinated reflow uses presentation time.
+
+A matching unique mount owns its audio voices, preventing an obsolete Strict Mode completion from stopping a replacement's loops. Source nodes are single-use, decoded buffers shared, twelve effects/two loops bounded, pause/reflow suspends combat audio. Completion persists a validated immutable CompletedRecord plus outbox in one IndexedDB transaction before future submission. Storage/network boundaries validate schema, finite values, names, configuration, pagination and duration; checks are not added to every simulation frame.

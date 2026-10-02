@@ -10,6 +10,8 @@ Selected entrypoints: [Pixi ownership and installed sources](../skills/pixijs-en
 
 Use the official skills shipped in the locked `pixi.js` package: `pixijs-application`, `pixijs-ticker`, `pixijs-scene-core-concepts`, `pixijs-scene-container`, `pixijs-scene-sprite`, `pixijs-assets`, `pixijs-events`, `pixijs-math` and `pixijs-performance`, selecting their references for the operation being changed. React's effect/external-store guidance owns the host integration. Inspect the audit/version notes before copying upstream examples.
 
+Use [browser audio](../skills/browser-audio/SKILL.md) for gesture, buffer/voice, clock and ownership cases. The game mix and visible feedback remain in this workflow.
+
 ## Decisions and execution
 
 1. Define a single private Application owner with asynchronous init, mount identity and cleanup. An exited initialization may complete, but cannot append a canvas, attach listeners or start rendering. Keep `autoStart` under that owner's control. Exercise setup/cleanup/setup in root Strict Mode.

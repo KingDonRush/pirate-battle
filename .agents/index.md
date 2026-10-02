@@ -27,7 +27,7 @@
 
 ## Knowledge selection
 
-Prefer workflow technology links. A narrow technical question can go directly to [React](skills/react-engineering/SKILL.md), [TypeScript](skills/typescript-engineering/SKILL.md), [Pixi](skills/pixijs-engineering/SKILL.md), [Query](skills/tanstack-query-engineering/SKILL.md), [Axios](skills/axios-http/SKILL.md), [MSW](skills/msw-mocking/SKILL.md), [Playwright](skills/playwright-testing/SKILL.md), [HTML/CSS](skills/html-css-accessibility/SKILL.md), [Vite](skills/vite-tooling/SKILL.md), [Vercel](skills/vercel-deployment/SKILL.md) or [Git/GitHub](skills/git-github-engineering/SKILL.md).
+Prefer workflow technology links. Audio cases route to [browser audio](skills/browser-audio/SKILL.md). A narrow technical question can go directly to [React](skills/react-engineering/SKILL.md), [TypeScript](skills/typescript-engineering/SKILL.md), [Pixi](skills/pixijs-engineering/SKILL.md), [Query](skills/tanstack-query-engineering/SKILL.md), [Axios](skills/axios-http/SKILL.md), [MSW](skills/msw-mocking/SKILL.md), [Playwright](skills/playwright-testing/SKILL.md), [HTML/CSS](skills/html-css-accessibility/SKILL.md), [Vite](skills/vite-tooling/SKILL.md), [Vercel](skills/vercel-deployment/SKILL.md) or [Git/GitHub](skills/git-github-engineering/SKILL.md).
 
 Publisher material supplements a specific decision: [React performance](skills/vercel-react-best-practices/SKILL.md), [composition](skills/vercel-composition-patterns/SKILL.md), [commits](skills/git-commit/SKILL.md). Read recorded exceptions. Pixi's official collection is a conditional dependency reference: install the existing lockfile if absent; do not copy/upgrade it solely for reading.
 

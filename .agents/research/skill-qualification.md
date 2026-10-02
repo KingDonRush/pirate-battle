@@ -106,3 +106,7 @@ Authored [Git/GitHub knowledge](../skills/git-github-engineering/SKILL.md) compl
 ## Context sources retained from preflight
 
 The October 1 research also consulted [Jungle Gaming's official site](https://junglegaming.io/pt) and [its public company page](https://br.linkedin.com/company/junglegaming) for context. These are background sources; they do not define or alter the naval-shooter contract. No private job-search material is included. Product requirements remain in the frozen company README, and implementation/design proposals belong to architecture and review documentation.
+
+## Browser audio gap, October 2, 2026
+
+The previous entrypoints mentioned audio without substantive ownership/recovery cases. [Browser audio](../skills/browser-audio/SKILL.md) now covers autoplay/gesture versus decode readiness, context interruption, source lifetime, bounded mix, distinct clocks and late setup/teardown. It is an authored synthesis of the linked MDN/specification primary sources, with no downloaded helpers or additional runtime library. Native browser tests exercise pause/owner replacement; actual listening/device-specific sound and final five-cycle evidence remain separate. Format/source review does not imply audible quality or complete game acceptance. This supplements technology knowledge without adding an eighth rubric workflow.

@@ -1,16 +1,10 @@
-import {
-  Application,
-  Container,
-  Graphics,
-  Sprite,
-  TilingSprite,
-  UPDATE_PRIORITY,
-} from 'pixi.js';
+import { Application, UPDATE_PRIORITY } from 'pixi.js';
 import type { GameAssets } from './assets';
 import type { AudioService } from './audio';
 import { InputController } from './input';
-import { ReflowCoordinator, worldToView, type ViewTransform } from './reflow';
+import { ReflowCoordinator, type ViewTransform } from './reflow';
 import { Simulation, STEP, type MatchSession } from './simulation';
+import { BattleScene } from './rendering';
 
 export type HudSnapshot = Readonly<{
   state: 'loading' | 'running' | 'reflowing' | 'paused' | 'finished';
@@ -28,14 +22,17 @@ export type CompletedLocalMatch = Readonly<{
   date: string;
 }>;
 let liveApplications = 0;
+let mountSequence = 0;
 export class GameRuntime {
+  setReducedMotion(value: boolean) {
+    this.reflow.setReducedMotion(value);
+    this.scene.setReducedMotion(value);
+  }
   readonly input: InputController;
   readonly simulation: Simulation;
   private application = new Application();
-  private world = new Container();
-  private overlays = new Container();
-  private player: Sprite;
-  private healthBar = new Graphics();
+  private scene: BattleScene;
+  private audioOwner: string;
   private reflow: ReflowCoordinator;
   private observer: ResizeObserver;
   private disposed = false;
@@ -79,31 +76,9 @@ export class GameRuntime {
       () => this.freeze(),
       () => this.ready(),
     );
-    const water = new TilingSprite({
-      texture: assets.water,
-      width: session.config.level.width,
-      height: session.config.level.height,
-    });
-    this.world.addChild(water);
-    for (const island of session.config.level.islands) {
-      const sprite = new Sprite(assets.island);
-      sprite.position.set(island.x, island.y);
-      sprite.width = island.width;
-      sprite.height = island.height;
-      this.world.addChild(sprite);
-    }
-    const texture = assets.ships.get('ship_2.png');
-    if (!texture) throw new Error('The player texture is unavailable.');
-    this.player = new Sprite(texture);
-    this.player.anchor.set(0.5);
-    this.world.addChild(this.player);
-    this.healthBar
-      .roundRect(0, 0, 42, 7, 3)
-      .fill(0x142b35)
-      .stroke({ color: 0xcba253, width: 1 });
-    this.healthBar.roundRect(2, 2, 38, 3, 1).fill(0x6fce7d);
-    this.overlays.addChild(this.healthBar);
-    this.application.stage.addChild(this.world, this.overlays);
+    this.audioOwner = session.id + ':' + ++mountSequence;
+    this.scene = new BattleScene(session, assets, reducedMotion);
+    this.application.stage.addChild(this.scene.world, this.scene.overlays);
     this.observer = new ResizeObserver(this.measure);
   }
   async init() {
@@ -138,15 +113,12 @@ export class GameRuntime {
       document.addEventListener('visibilitychange', this.visibility);
       window.visualViewport?.addEventListener('resize', this.measure);
       window.addEventListener('resize', this.measure);
-      void this.audio.begin(this.session.id);
+      void this.audio.begin(this.audioOwner);
       this.measure();
       this.application.start();
     } catch (error) {
       this.dispose();
-      if (!this.world.destroyed) {
-        this.world.destroy({ children: true });
-        this.overlays.destroy({ children: true });
-      }
+      if (!this.initialized) this.scene.dispose();
       throw error;
     }
   }
@@ -247,10 +219,30 @@ export class GameRuntime {
     this.publish();
     this.application.start();
   }
-  private frame = () => {
+  private manualClock =
+    new URLSearchParams(location.search).get('clock') === 'manual';
+  advance(milliseconds: number) {
+    if (!this.manualClock) throw new Error('Manual clock is not enabled.');
+    if (
+      !Number.isFinite(milliseconds) ||
+      milliseconds < 0 ||
+      milliseconds > 180000
+    )
+      throw new Error('Invalid clock advance.');
+    for (
+      let remaining = milliseconds;
+      remaining > 0 && !this.disposed && !this.simulation.endReason;
+      remaining -= Math.min(remaining, 100)
+    )
+      this.tick(Math.min(remaining, 100));
+  }
+  private frame = () => this.tick();
+  private tick(forcedDelta?: number) {
     if (this.disposed) return;
     const now = performance.now(),
-      elapsed = this.lastNow === 0 ? 0 : now - this.lastNow;
+      elapsed =
+        forcedDelta ??
+        (this.manualClock ? 0 : this.lastNow === 0 ? 0 : now - this.lastNow);
     this.lastNow = now;
     if (
       !this.pausedReason &&
@@ -267,28 +259,16 @@ export class GameRuntime {
       }
     }
     this.view = this.reflow.update(now);
-    this.world.pivot.set(
-      this.session.config.level.width / 2,
-      this.session.config.level.height / 2,
-    );
-    this.world.position.set(this.view.x, this.view.y);
-    this.world.scale.set(this.view.scale);
-    this.world.rotation = this.view.angle;
-    this.player.position.set(
-      this.simulation.player.x,
-      this.simulation.player.y,
-    );
-    this.player.rotation = this.simulation.player.heading + Math.PI;
-    const position = worldToView(
-      this.simulation.player.x,
-      this.simulation.player.y,
+    this.scene.update(
+      this.simulation,
       this.view,
+      this.reflow.active || this.pausedReason
+        ? 1
+        : Math.min(1, this.accumulator / STEP),
     );
-    const top = position.y - 66 * this.view.scale - 9;
-    this.healthBar.position.set(
-      Math.max(2, Math.min(this.view.width - 44, position.x - 21)),
-      Math.max(2, top),
-    );
+    for (const event of this.simulation.events)
+      this.audio.effect(event.kind, this.audioOwner);
+    this.simulation.events.length = 0;
     this.application.render();
     this.reflow.afterRender(now, this.host.clientWidth, this.host.clientHeight);
     this.publish();
@@ -305,7 +285,7 @@ export class GameRuntime {
       });
     }
     if (this.pausedReason && !this.reflow.active) this.application.stop();
-  };
+  }
   observe() {
     return {
       ...this.simulation.observe(),
@@ -314,6 +294,7 @@ export class GameRuntime {
       input: this.input.snapshot(),
       resources: {
         applications: liveApplications,
+        scene: this.scene.observe(),
         listeners: this.subscribers.size,
         audio: this.audio.observe(),
       },
@@ -325,7 +306,7 @@ export class GameRuntime {
     this.disposed = true;
     this.observer.disconnect();
     this.input.dispose();
-    this.audio.stop(this.session.id);
+    this.audio.stop(this.audioOwner);
     window.removeEventListener('blur', this.blur);
     document.removeEventListener('visibilitychange', this.visibility);
     window.visualViewport?.removeEventListener('resize', this.measure);
@@ -335,6 +316,7 @@ export class GameRuntime {
   }
   private destroyApplication() {
     this.application.ticker.remove(this.frame);
+    this.scene.dispose();
     this.application.destroy(
       { removeView: true, releaseGlobalResources: liveApplications === 1 },
       { children: true },
