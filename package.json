@@ -20,7 +20,8 @@
     "test:e2e:report": "playwright show-report artifacts/playwright/report",
     "browser:install": "PLAYWRIGHT_SKIP_BROWSER_GC=1 playwright install chromium",
     "check": "npm run check:structure && npm run lint && npm run typecheck && npm run format:check && npm run build && npm run test:e2e",
-    "check:structure": "node --test scripts/check-structure.test.mjs && node scripts/check-structure.mjs"
+    "check:structure": "node --test scripts/check-structure.test.mjs && node scripts/check-structure.mjs",
+    "profile": "playwright test --config playwright.profile.config.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "5.104.0",

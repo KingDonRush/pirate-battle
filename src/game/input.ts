@@ -15,6 +15,7 @@ const KEYS: Record<string, Action> = {
 export class InputController {
   private sources = new Map<string, readonly Action[]>();
   private enabled = false;
+  private disposed = false;
   private pause: () => void;
   constructor(pause: () => void) {
     this.pause = pause;
@@ -73,7 +74,12 @@ export class InputController {
       right: active.has('right'),
     };
   }
+  observe() {
+    return { listeners: this.disposed ? 0 : 2, sources: this.sources.size };
+  }
   dispose() {
+    this.disposed = true;
+    this.enabled = false;
     this.clear();
     window.removeEventListener('keydown', this.down);
     window.removeEventListener('keyup', this.up);

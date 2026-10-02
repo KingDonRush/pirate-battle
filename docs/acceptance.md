@@ -2,7 +2,7 @@
 
 > **Read contract:** solution documentation, not task tracking or authorization. Use it for the named subject; recover uncertain task context through [the index](../.agents/index.md) and check the [company brief](../CHALLENGE.md) before a material decision.
 
-Source: [official brief](../CHALLENGE.md), snapshot `315891441be81ca0bff75cf3c2b0cd2f27f119cd`. Current state: first playable arena candidate under Issue #13; combat/data/final delivery remain pending. **No rubric category is verified yet.** Keep the original weights; do not invent point values for individual tests.
+Source: [official brief](../CHALLENGE.md), snapshot `315891441be81ca0bff75cf3c2b0cd2f27f119cd`. Current state: the full implementation and reference presentation are on the #18 candidate, based on integrated e8e3c18. Full current-head optimized/development checks, final profiling and public delivery are still pending. Earlier passed slices are historical evidence, not this candidate's final gate. Keep the original weights; do not infer a rubric grade from test counts.
 
 ## Rubric and evidence
 
@@ -50,9 +50,9 @@ Shared fixtures and handlers must support: success; empty lists; several pages; 
 | D02 | Source, lockfile, assets/provenance, mocks, fixtures, tests and reviewed visual baselines available from a clean checkout; current HTML test report and failure traces; useful profiling evidence.                                            | Pending |
 | D03 | Public URL, same commit as delivery, production MSW, initial load/reload, desktop/touch verification, no unhandled console errors and access without private services or evaluator login.                                                     | Pending |
 
-## Preflight evidence boundary
+## Evidence boundary
 
-The startup smoke test checks React boot, one supplied logo, service worker activation, reload and horizontal overflow. It demonstrates environment readiness only. It earns no self-assigned game points. Replace it with game flow tests once those paths cover startup.
+The earlier startup-only smoke test was retired after actual game/worker/refresh/asset paths and normal console audits covered startup. Current scenarios exercise the required controls/rules/renderer and actual Axios/Query/MSW path. [Reference presentation review](visual-review.md) records the native composition and reviewed baseline boundaries. Hardware performance and physical-device/listening evidence remain separate from emulated or accelerated-clock results.
 
 ## First playable slice evidence
 
@@ -61,3 +61,9 @@ Issue #13 candidate includes real movement/rotation, hull-island/arena blocking,
 Combat candidate (#14/#15) adds real-control parallel weapons/cooldowns/player kills, seeded Chaser/Shooter behavior, one-hit swept collisions and finish/restart. Result persistence retains identity and config across refresh. Native headed background-tab checks cover explicit visibility resume on desktop/mobile sequentially. Remote integration, complete visual baselines and final profiling/publication remain unverified.
 
 Data candidate (#16/#17) exercises real Axios/Query/MSW paginated ranking/history, status/failure states, refresh/recovery, one-ID repeated registration and revision-bearing out-of-order responses in browser and Node. All scenario plans are selectable/resettable. Final broad visual/layout/resource/profiling/public-build evidence remains pending.
+
+## Current presentation candidate
+
+The optimized local gate passed **97 tests** with two intentional duplicate native-view skips, covering G01–G12, all fifteen reviewed baselines and ten layouts at DPR1/2/3. Structure/lint/types/format/build passed with the frozen brief unchanged. Seven targeted development/Strict Mode cases passed. After the final lazy-module error boundary, six affected optimized lifecycle/visual cases passed. The current-head CI and integrated-main gate still govern final acceptance.
+
+The long keyboard deadline uses genuine keys and a controlled clock; the native-focus check uses an actual headed tab switch. Neither is hardware FPS or physical-device proof. Final P01/P02, public build/source correspondence and the public report package are still required. Owning tasks remain open.

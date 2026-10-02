@@ -1,5 +1,5 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   createConfig,
   type Settings,
@@ -14,28 +14,22 @@ import {
   ApiError,
 } from '../data/api';
 import type { SubmissionService } from '../data/submissions';
-import { resetDemoData } from '../data/database';
-import { scenarios, SCENARIOS, isScenarioId } from '../mocks/scenarios';
-import { Dialog } from './Dialog';
 export function CaptainLog({
   settings,
   player,
   submissions,
+  onOpenChange,
 }: {
   settings: Settings;
   player: PlayerIdentity | null;
   submissions: SubmissionService;
+  onOpenChange: (open: boolean) => void;
 }) {
   const [tab, setTab] = useState<'ranking' | 'history'>('ranking'),
     [page, setPage] = useState(1),
     [ruleset, setRuleset] = useState('');
-  const [reset, setReset] = useState(false),
-    [failure, setFailure] = useState<string | null>(null);
-  const client = useQueryClient();
-  const scenario = useSyncExternalStore(
-    scenarios.subscribe,
-    scenarios.getSnapshot,
-  );
+  const [open, setOpen] = useState(false);
+
   useEffect(() => {
     let obsolete = false;
     void rulesetId(createConfig(settings)).then((id) => {
@@ -48,9 +42,9 @@ export function CaptainLog({
   const result = useQuery({
     queryKey:
       tab === 'ranking'
-        ? ['ranking', ruleset, page]
-        : ['history', player?.id ?? '', page],
-    enabled: tab === 'ranking' ? Boolean(ruleset) : Boolean(player),
+        ? ['ranking', ruleset, page, 5]
+        : ['history', player?.id ?? '', page, 5],
+    enabled: open && (tab === 'ranking' ? Boolean(ruleset) : Boolean(player)),
     queryFn: async ({ signal }) => {
       const data =
         tab === 'ranking'
@@ -71,28 +65,18 @@ export function CaptainLog({
     refetchOnWindowFocus: true,
   });
   const pages = Math.max(1, Math.ceil((result.data?.total ?? 0) / 5));
-  async function select(value: string) {
-    if (!isScenarioId(value)) return;
-    try {
-      scenarios.select(value);
-      await Promise.all([
-        client.cancelQueries({ queryKey: ['ranking'] }),
-        client.cancelQueries({ queryKey: ['history'] }),
-      ]);
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['ranking'] }),
-        client.invalidateQueries({ queryKey: ['history'] }),
-      ]);
-    } catch {
-      setFailure('Network preference could not be saved.');
-    }
-  }
   function changeTab(next: 'ranking' | 'history') {
     setTab(next);
     setPage(1);
+    setOpen(true);
+    onOpenChange(true);
   }
   return (
-    <section className="captain-log" aria-label="Captain's log">
+    <section
+      className={'captain-log' + (open ? ' expanded' : '')}
+      aria-label="Captain's log"
+    >
+      {open ? <h2>Captain's log</h2> : null}
       <div
         className="tabs"
         role="tablist"
@@ -145,6 +129,7 @@ export function CaptainLog({
       </div>
       <div
         id="record-panel"
+        hidden={!open}
         role="tabpanel"
         data-revision={result.data?.revision}
         aria-labelledby={tab === 'ranking' ? 'ranking-tab' : 'history-tab'}
@@ -208,16 +193,12 @@ export function CaptainLog({
                   : 'No completed battles yet.'}
               </p>
             ) : (
-              <ol className="records" start={(page - 1) * 5 + 1}>
-                {result.data.items.map((record, index) => (
-                  <RecordRow
-                    key={record.matchId}
-                    record={record}
-                    rank={tab === 'ranking' ? (page - 1) * 5 + index + 1 : null}
-                    yours={record.playerId === player?.id}
-                  />
-                ))}
-              </ol>
+              <RecordsTable
+                items={result.data.items}
+                kind={tab}
+                page={page}
+                playerId={player?.id ?? ''}
+              />
             )}
             <nav
               className="pagination"
@@ -246,113 +227,112 @@ export function CaptainLog({
           <p role="status">Preparing records…</p>
         )}
       </div>
-      <details className="network-controls">
-        <summary>Network conditions</summary>
-        <p className="help">
-          Demonstration service conditions for Ranking and Match History. They
-          do not change combat.
-        </p>
-        <label htmlFor="network-scenario">Scenario</label>
-        <select
-          id="network-scenario"
-          value={scenario}
-          onChange={(event) => {
-            void select(event.target.value);
+      {open ? (
+        <button
+          className="primary log-back"
+          onClick={() => {
+            setOpen(false);
+            onOpenChange(false);
+            document.getElementById('menu-play')?.focus();
           }}
         >
-          {Object.entries(SCENARIOS).map(([id, label]) => (
-            <option key={id} value={id}>
-              {label}
-            </option>
-          ))}
-        </select>
-        <p className="help">
-          Select Success to recover pending saves. Fixture players are local
-          demonstration data.
-        </p>
-        <button className="text-button" onClick={() => setReset(true)}>
-          Reset demo data
+          Main Menu
         </button>
-        {failure ? <p role="alert">{failure}</p> : null}
-      </details>
-      {reset ? (
-        <Dialog title="Reset demo data?" onCancel={() => setReset(false)}>
-          <p>
-            Confirmed and pending demo matches will be removed. Your name and
-            options stay saved.
-          </p>
-          <div className="stack">
-            <button className="primary" onClick={() => setReset(false)}>
-              Cancel
-            </button>
-            <button
-              className="secondary"
-              onClick={() => {
-                void (async () => {
-                  try {
-                    await submissions.reset();
-                    await client.cancelQueries();
-                    await resetDemoData();
-                    scenarios.select('success');
-                    client.removeQueries({ queryKey: ['ranking'] });
-                    client.removeQueries({ queryKey: ['history'] });
-                    setPage(1);
-                    setReset(false);
-                  } catch {
-                    setFailure('Demo data could not be reset.');
-                  }
-                })();
-              }}
-            >
-              Reset matches
-            </button>
-          </div>
-        </Dialog>
       ) : null}
     </section>
   );
 }
-function RecordRow({
-  record,
-  rank,
-  yours,
+function RecordsTable({
+  items,
+  kind,
+  page,
+  playerId,
 }: {
-  record: CompletedRecord;
-  rank: number | null;
-  yours: boolean;
+  items: readonly CompletedRecord[];
+  kind: 'ranking' | 'history';
+  page: number;
+  playerId: string;
 }) {
-  const date = new Date(record.completedAt);
+  const ranking = kind === 'ranking';
   return (
-    <li className={'record' + (yours ? ' your-record' : '')}>
-      {rank !== null ? <span className="rank">{rank}</span> : null}
-      <div className="record-info">
-        <strong>
-          {record.displayName} {yours ? <span className="you">You</span> : null}
-        </strong>
-        <time dateTime={record.completedAt}>
-          {date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </time>
-        {rank === null ? (
-          <span>
-            {Math.floor(record.duration / 60)}:
-            {String(Math.floor(record.duration % 60)).padStart(2, '0')} ·{' '}
-            {record.endReason === 'time' ? 'Time up' : 'Defeated'}
-          </span>
-        ) : null}
-        {record.matchId.startsWith('fixture:') ? (
-          <span className="fixture-label">Demo record</span>
-        ) : null}
-      </div>
-      <strong className="points">
-        {record.score}
-        <span>points</span>
-      </strong>
-    </li>
+    <table className={'records records-table ' + kind} role="table">
+      <thead>
+        <tr>
+          {(ranking
+            ? ['Rank', 'Captain', 'Points', 'Played']
+            : ['Date', 'Points', 'Duration', 'Result']
+          ).map((label) => (
+            <th key={label} scope="col">
+              {label}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((record, index) => {
+          const date = new Date(record.completedAt),
+            when = (
+              <time
+                dateTime={record.completedAt}
+                title={date.toLocaleString('en-US')}
+                aria-label={date.toLocaleString('en-US')}
+              >
+                {date
+                  .toLocaleDateString('en-US', {
+                    day: '2-digit',
+                    month: 'short',
+                  })
+                  .toUpperCase()}{' '}
+                ·{' '}
+                {date.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                })}
+              </time>
+            );
+          return (
+            <tr
+              key={record.matchId}
+              className={
+                'record' + (record.playerId === playerId ? ' your-record' : '')
+              }
+              role="row"
+            >
+              {ranking ? (
+                <>
+                  <td className="rank">
+                    {String((page - 1) * 5 + index + 1).padStart(2, '0')}
+                  </td>
+                  <td className="record-name">
+                    {record.displayName}{' '}
+                    {record.playerId === playerId ? (
+                      <span className="you">You</span>
+                    ) : null}
+                  </td>
+                  <td className="points">{record.score}</td>
+                  <td className="played">{when}</td>
+                </>
+              ) : (
+                <>
+                  <td className="played">
+                    {when}
+                    <span className="history-name">{record.displayName}</span>
+                  </td>
+                  <td className="points">{record.score}</td>
+                  <td>
+                    {Math.floor(record.duration / 60)}:
+                    {String(Math.floor(record.duration % 60)).padStart(2, '0')}
+                  </td>
+                  <td className={'end-reason ' + record.endReason}>
+                    {record.endReason === 'time' ? 'Time up' : 'Defeated'}
+                  </td>
+                </>
+              )}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }

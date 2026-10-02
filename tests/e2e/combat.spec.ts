@@ -82,11 +82,11 @@ test('G05 real seeded rules pursue, fire and finish without Chaser impact points
 test('G04 three actual weapons produce parallel broadsides and independent cooldowns', async ({
   page,
 }) => {
-  await start(page);
+  await start(page, true);
   await page.keyboard.down(' ');
   await page.keyboard.down('q');
   await page.keyboard.down('e');
-  await page.clock.runFor(50);
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 50);
   const fired = await world(page);
   expect(fired.shots).toMatchObject({ front: 1, left: 1, right: 1 });
   const left = fired.projectiles.filter((p) => p.vx < -400),
@@ -96,7 +96,7 @@ test('G04 three actual weapons produce parallel broadsides and independent coold
   expect(new Set(left.map((p) => p.vy.toFixed(4))).size).toBe(1);
   expect(new Set(left.map((p) => p.y.toFixed(1))).size).toBe(3);
   expect(fired.projectiles.some((p) => p.vy === -400 && p.vx === 0)).toBe(true);
-  await page.clock.runFor(500);
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 500);
   const cooling = await world(page);
   expect(cooling.shots.front).toBe(2);
   expect(cooling.shots.left).toBe(1);
@@ -109,7 +109,7 @@ test('G04 player controls kill through real projectile collision and score once'
   page,
 }) => {
   test.setTimeout(90000);
-  await start(page);
+  await start(page, true);
   await page.keyboard.down(' ');
   let kills = 0;
   for (let step = 0; step < 100 && kills === 0; step++) {
@@ -126,7 +126,7 @@ test('G04 player controls kill through real projectile collision and score once'
       if (Math.abs(difference) > 0.05)
         await page.keyboard.down(difference < 0 ? 'a' : 'd');
     }
-    await page.clock.runFor(150);
+    await page.evaluate((ms) => window.pirateBattle?.advance(ms), 150);
     kills = (await world(page)).score;
   }
   expect(kills).toBeGreaterThan(0);
@@ -135,7 +135,7 @@ test('G04 player controls kill through real projectile collision and score once'
   await page.keyboard.up('d');
   const kill = await world(page);
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
-  await page.clock.runFor(2000);
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 2000);
   expect((await world(page)).score).toBe(kill.score);
   expect(
     kill.projectiles.every((p) => p.owner === 'player' || p.owner === 'enemy'),
@@ -145,13 +145,16 @@ test('G05 standard match spawns both roles at the configured interval', async ({
   page,
 }) => {
   test.setTimeout(60000);
-  await start(page);
-  await page.clock.runFor(3100);
+  await start(page, true);
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 3100);
   const first = await world(page);
   expect(first.spawnIndex).toBe(1);
   expect(first.enemies[0]?.kind).toBe('chaser');
   const remaining = first.nextSpawn - first.elapsed;
-  await page.clock.runFor(Math.max(0, remaining * 1000 + 100));
+  await page.evaluate(
+    (ms) => window.pirateBattle?.advance(ms),
+    Math.max(0, remaining * 1000 + 100),
+  );
   const second = await world(page);
   expect(second.enemies.some((e) => e.kind === 'shooter')).toBe(true);
   expect(second.spawnIndex).toBe(2);
@@ -256,6 +259,7 @@ test('G01 paused Options changes the next match without replacing active world',
   const paused = await world(page);
   await page.getByRole('button', { name: 'Options', exact: true }).click();
   await page.getByLabel('Game session time', { exact: true }).fill('180');
+  await page.getByText('Sound and motion', { exact: true }).click();
   await page.getByLabel('Reduce motion').check();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   const unchanged = await world(page);
@@ -265,4 +269,43 @@ test('G01 paused Options changes the next match without replacing active world',
   await page.getByRole('button', { name: 'Resume', exact: true }).click();
   await page.clock.runFor(100);
   expect((await world(page)).matchId).toBe(paused.matchId);
+});
+
+test('G04 projectile lifetime consumes a bounded shot on the open-water route', () => {
+  const config = createConfig({ ...DEFAULT_SETTINGS, spawnInterval: 10 });
+  const game = new Simulation({
+    id: 'expiry',
+    player: { id: 'pilot', name: 'Expiry Captain' },
+    seed: 42,
+    config,
+  });
+  for (const [ticks, forward, turn] of [
+    [60, false, 1],
+    [18, true, 0],
+    [30, false, 1],
+    [162, true, 0],
+    [60, false, 1],
+  ] as const)
+    for (let i = 0; i < ticks; i++)
+      game.step({ ...EMPTY_INPUT, forward, turn });
+  game.step({ ...EMPTY_INPUT, front: true });
+  const ball = [...game.projectiles.values()][0];
+  if (!ball) throw new Error('No cannonball on the open-water route');
+  const origin = { ...ball.previous };
+  let furthest = 0;
+  for (let i = 0; i < 100 && game.projectiles.has(ball.id); i++) {
+    const current = game.projectiles.get(ball.id)!;
+    furthest = Math.max(
+      furthest,
+      Math.hypot(current.x - origin.x, current.y - origin.y),
+    );
+    game.step(EMPTY_INPUT);
+  }
+  expect(game.projectiles.has(ball.id)).toBe(false);
+  expect(furthest).toBeLessThanOrEqual(
+    config.weapons.front.speed * config.weapons.front.lifetime + 1e-6,
+  );
+  expect(furthest).toBeGreaterThan(590);
+  expect(game.elapsed + 1e-9).toBeGreaterThanOrEqual(ball.expiresAt);
+  expect(game.score).toBe(0);
 });

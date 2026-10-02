@@ -1,5 +1,4 @@
 import {
-  LEVEL,
   validateName,
   validateOptions,
   type EnemyConfig,
@@ -80,7 +79,7 @@ export function decodeConfig(value: unknown): MatchConfig {
     spawn = object(v.spawn),
     level = object(v.level);
   if (
-    v.version !== 1 ||
+    (v.version !== 1 && v.version !== 2) ||
     !Array.isArray(level.islands) ||
     level.islands.length < 1 ||
     level.islands.length > 32
@@ -102,48 +101,58 @@ export function decodeConfig(value: unknown): MatchConfig {
       throw new Error('Unknown enemy type.');
     return kind;
   });
+  const width = number(level.width, 100),
+    height = number(level.height, 100);
   const islands = level.islands.map((raw: unknown) => {
     const i = object(raw);
     return Object.freeze({
-      x: number(i.x),
-      y: number(i.y),
+      x: number(i.x, -width, width),
+      y: number(i.y, -height, height),
       width: number(i.width, 1),
       height: number(i.height, 1),
       radius: number(i.radius),
     });
   });
-  const width = number(level.width, 100),
-    height = number(level.height, 100);
   if (
     islands.some(
       (i) =>
-        i.x + i.width > width ||
-        i.y + i.height > height ||
+        i.x >= width ||
+        i.y >= height ||
+        i.x + i.width <= 0 ||
+        i.y + i.height <= 0 ||
+        i.x + i.width > 2 * width ||
+        i.y + i.height > 2 * height ||
         i.radius > Math.min(i.width, i.height) / 2,
     )
   )
     throw new Error('Invalid island geometry.');
   const version = text(level.version);
-  if (
-    version !== LEVEL.version ||
-    width !== LEVEL.width ||
-    height !== LEVEL.height
-  )
-    throw new Error('Unsupported level geometry version.');
   return Object.freeze({
-    version: 1,
+    version: v.version,
     duration,
     spawnInterval,
     level: Object.freeze({
-      version: LEVEL.version,
-      width: LEVEL.width,
-      height: LEVEL.height,
+      version,
+      width,
+      height,
       islands: Object.freeze(islands),
     }),
     player: Object.freeze({
       health: number(player.health, 1),
       speed: number(player.speed, 1),
       turnSpeed: number(player.turnSpeed, 0.01, 100),
+      ...(player.start !== undefined
+        ? {
+            start: (() => {
+              const start = object(player.start);
+              return Object.freeze({
+                x: number(start.x, 0, width),
+                y: number(start.y, 0, height),
+                heading: number(start.heading, -100, 100),
+              });
+            })(),
+          }
+        : {}),
     }),
     hull: Object.freeze({
       radius: number(hull.radius, 1),

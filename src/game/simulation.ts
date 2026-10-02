@@ -82,17 +82,19 @@ export class Simulation {
   nextSpawn = 0;
   spawnIndex = 0;
   private nextId = 1;
+  private warnedTime = false;
   private rng: number;
   constructor(session: MatchSession) {
     this.session = session;
     this.rng = session.seed >>> 0;
     this.nextSpawn = session.config.spawnInterval;
+    const start = session.config.player.start ?? { x: 480, y: 520, heading: 0 };
     this.player = this.createShip(
       0,
       'player',
-      480,
-      520,
-      0,
+      start.x,
+      start.y,
+      start.heading,
       session.config.player.health,
       0,
     );
@@ -228,10 +230,12 @@ export class Simulation {
     this.advanceProjectiles();
     if (
       !this.endReason &&
-      this.session.config.duration - this.elapsed <= 10 &&
-      this.session.config.duration - this.elapsed + STEP > 10
-    )
+      !this.warnedTime &&
+      this.session.config.duration - this.elapsed <= 10
+    ) {
+      this.warnedTime = true;
       this.events.push({ ...this.player, kind: 'time-warning' });
+    }
   }
   move(ship: Ship, turn: number, speed: number, turnSpeed: number) {
     ship.previous.x = ship.x;
@@ -333,9 +337,15 @@ export class Simulation {
     const config = this.session.config;
     for (const projectile of this.projectiles.values()) {
       if (this.endReason) return;
+      const remaining = projectile.expiresAt - this.elapsed;
+      if (remaining <= 1e-9) {
+        this.projectiles.delete(projectile.id);
+        continue;
+      }
+      const delta = Math.min(STEP, remaining);
       const end = {
-        x: projectile.x + projectile.vx * STEP,
-        y: projectile.y + projectile.vy * STEP,
+        x: projectile.x + projectile.vx * delta,
+        y: projectile.y + projectile.vy * delta,
       };
       let first: number | null = null,
         target: Ship | null = null;
@@ -383,7 +393,7 @@ export class Simulation {
       projectile.x = end.x;
       projectile.y = end.y;
       if (
-        this.elapsed >= projectile.expiresAt ||
+        remaining < STEP - 1e-9 ||
         segmentRect(end, end, {
           x: 0,
           y: 0,
@@ -415,6 +425,11 @@ export class Simulation {
       this.score++;
       this.events.push({ kind: 'score', x: enemy.x, y: enemy.y });
     }
+  }
+  dispose() {
+    this.enemies.clear();
+    this.projectiles.clear();
+    this.events.length = 0;
   }
   observe() {
     return {

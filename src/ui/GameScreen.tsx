@@ -16,11 +16,16 @@ import turnLeftIcon from '../../assets/png/retina/ui/controls/icon_turn_left.png
 import turnRightIcon from '../../assets/png/retina/ui/controls/icon_turn_right.png?url';
 import frontIcon from '../../assets/png/retina/ui/controls/icon_fire_front.png?url';
 import leftIcon from '../../assets/png/retina/ui/controls/icon_fire_left.png?url';
+import heartIcon from '../../assets/png/retina/ui/hud/icon_heart.png?url';
+import scoreIcon from '../../assets/png/retina/ui/hud/icon_score.png?url';
+import timeIcon from '../../assets/png/retina/ui/hud/icon_time.png?url';
+import pauseIcon from '../../assets/png/retina/ui/controls/icon_pause.png?url';
+import logoUrl from '../../assets/logo_jungle_gaming.svg?url';
 import rightIcon from '../../assets/png/retina/ui/controls/icon_fire_right.png?url';
 declare global {
   interface Window {
     pirateBattle?: {
-      observe: () => ReturnType<GameRuntime['observe']>;
+      observe: (includeFrames?: boolean) => ReturnType<GameRuntime['observe']>;
       advance: (milliseconds: number) => void;
     };
   }
@@ -87,6 +92,10 @@ function Battle({
   options: (close: () => void) => ReactNode;
 }) {
   const hud = useSyncExternalStore(runtime.subscribe, runtime.getSnapshot);
+  useEffect(() => {
+    if (hud.state === 'running')
+      document.querySelector<HTMLElement>('.arena-viewport')?.focus();
+  }, [hud.state]);
   const [confirm, setConfirm] = useState(false);
   const [editingOptions, setEditingOptions] = useState(false);
   const mins = Math.floor(hud.remaining / 60),
@@ -100,13 +109,37 @@ function Battle({
         </div>
         <div
           className="hud-health"
-          aria-label={'Health: ' + hud.health + ' of 100'}
+          aria-label={
+            'Health: ' +
+            hud.health +
+            ' of ' +
+            runtime.session.config.player.health
+          }
         >
-          <span aria-hidden="true">♥</span>
-          <strong>{hud.health} / 100</strong>
+          <img className="heart-icon" src={heartIcon} alt="" />
+          <div className="health-gauge">
+            <span
+              className="health-fill"
+              style={{
+                clipPath:
+                  'inset(0 ' +
+                  ((256 -
+                    30 -
+                    (196 * hud.health) / runtime.session.config.player.health) /
+                    256) *
+                    100 +
+                  '% 0 0)',
+                visibility: hud.health === 0 ? 'hidden' : 'visible',
+              }}
+            />
+            <strong>
+              {hud.health} / {runtime.session.config.player.health}
+            </strong>
+          </div>
         </div>
         <div className="hud-counter" aria-label={'Score: ' + hud.score}>
-          <span>Score</span>
+          <img className="counter-icon" src={scoreIcon} alt="" />
+          <span className="counter-label">Score</span>
           <strong>{hud.score}</strong>
         </div>
         <div
@@ -115,13 +148,18 @@ function Battle({
             'Time remaining: ' + mins + ' minutes ' + secs + ' seconds'
           }
         >
-          <span>Time</span>
+          <img className="counter-icon" src={timeIcon} alt="" />
+          <span className="counter-label">Time</span>
           <strong>
-            {mins}:{secs}
+            {String(mins).padStart(2, '0')}:{secs}
           </strong>
         </div>
-        <button className="small-button" onClick={() => runtime.pause()}>
-          Pause
+        <button
+          className="small-button game-pause"
+          aria-label="Pause"
+          onClick={() => runtime.pause()}
+        >
+          <img src={pauseIcon} alt="" />
         </button>
       </header>
       <div className="steering controls" aria-label="Movement controls">
@@ -195,7 +233,13 @@ function Battle({
       ) : null}
       {hud.audioError ? (
         <p className="sound-notice" role="status">
-          {hud.audioError}
+          {hud.audioError}{' '}
+          <button
+            className="text-button"
+            onClick={() => runtime.recoverSound()}
+          >
+            Retry sound
+          </button>
         </p>
       ) : null}
       <p className="sr-only" role="status">
@@ -207,22 +251,19 @@ function Battle({
       </p>
       {hud.state === 'paused' && !confirm && !editingOptions ? (
         <Dialog title="Paused">
-          <p>
-            {hud.reason === 'Paused'
-              ? 'Resume when you are ready.'
-              : hud.reason}
-          </p>
+          <p>{hud.reason === 'Paused' ? 'Ready when you are.' : hud.reason}</p>
           <div className="stack">
-            <button className="primary" onClick={() => runtime.resume()}>
+            <button
+              className="primary"
+              disabled={!hud.rendererAvailable}
+              onClick={() => runtime.resume()}
+            >
               Resume
             </button>
-            <button
-              className="secondary"
-              onClick={() => setEditingOptions(true)}
-            >
+            <button className="primary" onClick={() => setEditingOptions(true)}>
               Options
             </button>
-            <button className="secondary" onClick={() => setConfirm(true)}>
+            <button className="primary" onClick={() => setConfirm(true)}>
               Main Menu
             </button>
           </div>
@@ -233,6 +274,7 @@ function Battle({
           title="Battle options"
           onCancel={() => setEditingOptions(false)}
         >
+          <p>Changes apply to your next match.</p>
           {options(() => setEditingOptions(false))}
         </Dialog>
       ) : null}
@@ -271,7 +313,9 @@ export function GameScreen({
   const motion = useRef(reducedMotion);
   const [runtime, setRuntime] = useState<GameRuntime | null>(null);
   const [progress, setProgress] = useState(0),
-    [error, setError] = useState<string | null>(null),
+    [error, setError] = useState<{ message: string; reload: boolean } | null>(
+      null,
+    ),
     [attempt, setAttempt] = useState(0);
   useEffect(() => {
     motion.current = reducedMotion;
@@ -304,18 +348,19 @@ export function GameScreen({
         element.focus();
         const accepted = owned;
         window.pirateBattle = {
-          observe: () => accepted.observe(),
+          observe: (includeFrames) => accepted.observe(includeFrames),
           advance: (milliseconds) => accepted.advance(milliseconds),
         };
       })
-      .catch((cause: unknown) => {
+      .catch(() => {
         owned?.dispose();
         if (!obsolete)
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : 'The arena could not load.',
-          );
+          setError({
+            message: owned
+              ? 'The graphics renderer could not start. Try again reloads this page.'
+              : 'Ships or islands could not load. Check your connection and try again.',
+            reload: Boolean(owned),
+          });
       });
     return () => {
       obsolete = true;
@@ -326,6 +371,7 @@ export function GameScreen({
   }, [session, audio, onFinish, attempt]);
   return (
     <main className="game-shell">
+      <img className="battle-brand" src={logoUrl} alt="Jungle Gaming" />
       <div
         ref={host}
         className="arena-viewport"
@@ -339,11 +385,15 @@ export function GameScreen({
           <h2>{error ? 'The arena could not load' : 'Preparing the battle'}</h2>
           {error ? (
             <>
-              <p role="alert">{error}</p>
+              <p role="alert">{error.message}</p>
               <div className="stack">
                 <button
                   className="primary"
                   onClick={() => {
+                    if (error.reload) {
+                      location.reload();
+                      return;
+                    }
                     setError(null);
                     setProgress(0);
                     setAttempt((value) => value + 1);

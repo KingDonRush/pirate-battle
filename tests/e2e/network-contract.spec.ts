@@ -10,6 +10,7 @@ import { ScenarioController, SCENARIOS } from '../../src/mocks/scenarios';
 import { fixtureRecords } from '../../src/mocks/fixtures';
 import {
   decodePage,
+  decodeConfig,
   decodeRecord,
   canonical,
   rulesetId,
@@ -184,4 +185,23 @@ test('G10 shared handlers reproduce each transport/status and latency failure', 
   } finally {
     server.close();
   }
+});
+
+test('G10 historical complete config keeps its original canonical fingerprint', async () => {
+  const current = createConfig(DEFAULT_SETTINGS);
+  const historical = {
+    ...current,
+    version: 1 as const,
+    level: {
+      width: 960,
+      height: 640,
+      version: 'islands-v1',
+      islands: [{ x: 192, y: 128, width: 160, height: 160, radius: 28 }],
+    },
+    player: { health: 100, speed: 150, turnSpeed: Math.PI },
+  };
+  const decoded = decodeConfig(historical);
+  expect(canonical(decoded)).toBe(canonical(historical));
+  expect(await rulesetId(decoded)).toBe(await rulesetId(historical));
+  expect(await rulesetId(decoded)).not.toBe(await rulesetId(current));
 });

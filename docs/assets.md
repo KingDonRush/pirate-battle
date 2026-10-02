@@ -21,6 +21,10 @@ All PNG files were decoded for integrity. Both XML and both JSON atlases were pa
 
 ## Licenses
 
-The challenge provides these files for the assessment and directs candidates to use them. The supplied snapshot has no separate LICENSE or asset-license file. Preserve its origin and do not invent a license or identify an unverified original artist. Record the source and actual license of any complementary asset before adding it. The starter currently adds no external visual or audio assets.
+The challenge provides these files for the assessment and directs candidates to use them. The supplied snapshot has no separate LICENSE or asset-license file. Preserve its origin and do not invent a license or identify an unverified original artist. Record the source and actual license of any complementary asset before adding it. Nunito is the only complementary visual asset; its source/license is recorded below. No supplemental bitmap or audio pack was added.
 
 The vendored Vercel React skill declares MIT in its [SKILL.md](../.agents/skills/vercel-react-best-practices/SKILL.md), with Vercel as author. It was installed from commit `063bee94c3f4df8453406c830b0a7df0f2860278`. Preserve its upstream files and attribution when updating. Runtime/library licenses remain available in their npm packages and should be listed with any added assets in the final handoff.
+
+## Complementary typeface
+
+Nunito variable font is self-hosted from the Google Fonts repository at commit 8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5, ofl/nunito/Nunito[wght].ttf. Its supplied SIL Open Font License is preserved in assets/fonts/OFL.txt. This rounded type choice supports the reference control/heading treatment; the reference images do not identify their original font, so an exact font provenance match is not claimed. The provided title artwork remains unchanged.

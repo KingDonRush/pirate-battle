@@ -79,6 +79,7 @@ export class AudioService {
     const byUrl = new Map<string, Promise<AudioBuffer>>();
     await Promise.allSettled(
       Object.entries(URLS).map(async ([name, url]) => {
+        if (this.buffers.has(name)) return;
         try {
           let task = byUrl.get(url);
           if (!task) {
@@ -226,6 +227,7 @@ export class AudioService {
     return {
       contexts: Number(this.context !== null),
       voices: this.voices.size,
+      buffers: this.buffers.size,
       loops: [...this.voices.values()].filter((v) => v.loop).length,
       state: this.context?.state,
     };
