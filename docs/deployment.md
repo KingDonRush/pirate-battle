@@ -1,11 +1,13 @@
 # Deployment
 
-Target: a public Vercel URL serving the same commit as the submitted solution. The project is configured locally; no repository was created on the user's account and nothing has been published during preflight.
+> **Read contract:** solution documentation, not task tracking or authorization. Use it for the named subject; recover uncertain task context through [the index](../.agents/index.md) and check the [company brief](../CHALLENGE.md) before a material decision.
+
+Target: a public Vercel URL serving the same commit as the submitted solution. The public solution fork is [KingDonRush/pirate-battle](https://github.com/KingDonRush/pirate-battle). Static build settings are prepared; no game or Vercel deployment exists.
 
 ## User configuration
 
 1. Sign in to [Vercel](https://vercel.com/) with the GitHub account that will own the solution.
-2. Use a solution repository under that account. The local `upstream` remote points to Jungle's brief. Add `origin` only after the destination repository exists; do not push solution commits to the challenge repository.
+2. Import the existing solution fork. `origin` points to that fork; `upstream` remains Jungle's brief. Direct all solution work to `origin`.
 3. Import the solution repository into Vercel. Select Vite, repository root, Node.js 22.x, install command `npm ci`, build command `npm run build`, and output directory `dist`. These commands are also in `vercel.json`.
 4. No secrets or environment variables are required by the selected architecture. Ranking and history are simulated in the browser, so a database, API host and WebSocket service are unnecessary for this challenge.
 5. For evaluator access, ensure the final URL opens without Vercel login or deployment protection. A custom domain is optional. Keep the deployment accessible throughout evaluation.
@@ -20,4 +22,4 @@ Verify the actual HTTPS deployment with a fresh browser context: initial load, r
 
 If an earlier service worker remains in the test profile, unregister only that project's worker and clear only its namespaced storage before rechecking. Do not clear all user browsing data. Make the final commit available to the evaluator without a private dependency.
 
-The first playable preview and final publication occur in the implementation phase after authorization. Provider account setup can happen while the game is being built.
+Publication is a later authorized implementation step; this structural delivery creates no deployment or gameplay task.

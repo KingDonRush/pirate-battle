@@ -1,8 +1,12 @@
 # Interface, feedback, responsiveness and accessibility — 15 points
 
-Contract: brief sections 3 and 7, with relevant [G01–G10](../ACCEPTANCE.md). This workflow owns what the player sees, understands and can operate.
+> **Read contract:** project procedure for this rubric criterion. Recover intent through [the index](../index.md), read the relevant [company requirement](../../CHALLENGE.md) and apply [common engineering](../policies/engineering.md). Load only the selected skills; reenter the index if task or evidence is unclear.
+
+Contract: brief sections 3 and 7, with relevant [G01–G10](../../docs/acceptance.md). This workflow owns what the player sees, understands and can operate.
 
 ## Specialized knowledge to load
+
+Selected entrypoints: [React components/state](../skills/react-engineering/SKILL.md); [HTML/CSS, focus and pointer interaction](../skills/html-css-accessibility/SKILL.md).
 
 Use researched React component/state/composition material, supplied visual assets, and the W3C keyboard/focus/tabs/dialog/target-size guidance. Read the relevant Pixi Sprite/Graphics/Text material for overlays and effects. Performance rules are applied according to the actual update frequency and visible behavior.
 

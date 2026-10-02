@@ -1,5 +1,7 @@
 # MSW: realistic contracts, deterministic scenarios and isolation
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Baseline: MSW 2.15.0 package/API and live probes; current web examples may target major 3 and different import/startup APIs. Use installed exports/types as the compatibility boundary. The probe used `http`, `HttpResponse` and `delay` from `msw`, and `setupServer` from `msw/node`.
 
 ## M1. Network interception preserves the path under test

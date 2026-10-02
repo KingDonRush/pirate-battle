@@ -9,6 +9,8 @@ metadata:
 
 # React engineering
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Read [component, state and lifecycle cases](references/components-state-lifecycle.md) for contract/composition, identity/reset, drafts, effects, asynchronous ownership, external stores, memoization and the reviewed React 19 disagreement. Each case describes when it arises, the failure mechanism, alternative choices and observable checks. The reviewed upstream composition/performance packages supplement these cases; apply only the relevant rules.
 
 React computes a UI from props and state, then commits changes. Render logic must stay pure so repeated or interrupted renders are safe. Identify the installed React version, existing component conventions and the owner of each state value before making an integration choice.

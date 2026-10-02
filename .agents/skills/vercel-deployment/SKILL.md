@@ -9,6 +9,8 @@ metadata:
 
 # Vercel deployment
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Read [build/access/publication cases](references/build-access-publication.md) for source correspondence, audience access, resource responses and the reviewed intermediary-upload helper exclusion. Use the actual selected account/integration and preserve existing authorization.
 
 Vercel connects source/build configuration to a hosted deployment. Identify the existing project, owning account, source repository, framework and requested environment before creating another resource. Use existing session authorization and complete the preparatory work needed to make publication reviewable.

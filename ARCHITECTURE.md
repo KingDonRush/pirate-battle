@@ -1,6 +1,10 @@
 # Architecture
 
+> **Read contract:** solution documentation; proposals and verified behavior are distinguished below. Recover uncertain task context through [the index](.agents/index.md); the [company brief](CHALLENGE.md) governs material requirements.
+
 Status: implementation design, established during preflight on October 1, 2026. Only the React bootstrap, stable QueryClient, browser MSW startup and tooling currently exist. Replace design claims with verified behavior as each slice ships.
+
+The build uses Vite and plain CSS. TypeScript 6.0.3 remains within the installed typescript-eslint 8.71.0 peer range (`>=4.8.4 <6.1.0`). Dependency versions are not changed by the governance migration.
 
 ## Responsibilities and dependencies
 
@@ -64,6 +68,6 @@ Mocks start in the published browser build. Scenario controls belong in a disclo
 
 ## Verification and current limits
 
-The [acceptance matrix](docs/ACCEPTANCE.md) owns verification status. Add pure-rule tests when simulation functions exist, and browser tests that use actual keyboard and pointer controls. Test hooks may observe immutable snapshots and control elapsed time/seed; they cannot set score, apply damage, fabricate completion or move entities to pass combat tests.
+The [acceptance matrix](docs/acceptance.md) owns verification status. Add pure-rule tests when simulation functions exist, and browser tests that use actual keyboard and pointer controls. Test hooks may observe immutable snapshots and control elapsed time/seed; they cannot set score, apply damage, fabricate completion or move entities to pass combat tests.
 
 Use the optimized build for a 180-second profiling run and five start/play/exit cycles. Record FPS, p95 frame intervals, entity counts, listener/ticker counts, memory method and environment. Headless Chromium is useful for regression; hardware acceleration on a real browser is the production performance reference. Persist options, last completed result, confirmed mock records and pending submissions. Active combat is deliberately not restored after reload.

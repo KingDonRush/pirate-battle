@@ -1,5 +1,7 @@
 # Vercel: build identity, access and publication boundaries
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Research scope: official deployment/build/Vite documentation and static review of an external deploy helper. The workflow supplies the account, source and publication intent; this material does not grant external-action permission.
 
 ## D1. A deployment is a specific build

@@ -1,5 +1,7 @@
 # TypeScript: contracts, runtime validation and readable state models
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Research baseline: TypeScript 6.0.3 and the official narrowing, object/generic and compiler-option references. The cases are engineering applications, not a replacement for domain invariants supplied by a workflow.
 
 ## T1. An unchecked value is not a domain object

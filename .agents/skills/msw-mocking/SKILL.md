@@ -9,6 +9,8 @@ metadata:
 
 # MSW network mocking
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Read [scenario, state and isolation cases](references/scenarios-state-isolation.md) for browser/Node boundaries, startup, delay/response revisions, commit-then-timeout, handler versus data reset and service-worker test interception. Use the workflow to select mocked environments and required failure cases.
 
 MSW intercepts requests at the network boundary, allowing the real client and application code to execute. It is not a substitute for implementing domain logic or a production backend. Identify the installed major version and supported handler/startup APIs before following current documentation.

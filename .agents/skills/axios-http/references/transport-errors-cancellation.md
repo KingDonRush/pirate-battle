@@ -1,5 +1,7 @@
 # Axios: transport ownership, uncertainty and diagnostic safety
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Research baseline: Axios 1.20.0 installed implementation/types, official cancellation/error/interceptor docs, and live Axios–Query–MSW probes. API contracts and product retry actions remain workflow decisions.
 
 ## A1. Client instance and response boundary

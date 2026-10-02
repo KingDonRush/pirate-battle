@@ -1,5 +1,7 @@
 # Playwright: behavioral evidence, deterministic time and visual review
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Baseline: Playwright 1.62.1, official runner/API docs and a reviewed Checkly reference package used for topic discovery. That package's extra CLI, unconditional updates, authentication setup and some generalizations are not adopted as requirements. The workflow selects product acceptance cases.
 
 ## E1. Locators and what a passing assertion means

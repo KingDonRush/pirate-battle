@@ -1,5 +1,7 @@
 # TanStack Query: identity, observers, mutations and durable recovery
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Primary baseline: Query 5.104.0 installed code and official React adapter documentation. A community package supplied useful topic discovery but was not adopted wholesale: its absolute Date-key rule and some prescribed architecture choices were evaluated independently. The cases below are reusable engineering conclusions.
 
 ## Q1. Identity is a data contract

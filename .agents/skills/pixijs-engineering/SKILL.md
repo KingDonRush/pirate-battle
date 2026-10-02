@@ -9,7 +9,9 @@ metadata:
 
 # PixiJS engineering
 
-Start with the [official PixiJS v8 router shipped in the installed package](../../../node_modules/pixi.js/skills/pixijs/SKILL.md), then the specialized skill it selects. Read [version-checked runtime cases](references/runtime-ownership-cases.md) for ownership, timing, shared animation, assets, geometry/events, profiling and corrections to upstream examples. Prefer those substantive official sources to this entrypoint summary.
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
+Start with the official PixiJS v8 router in the host's installed package, at `pixi.js/skills/pixijs/SKILL.md`, then the specialized skill it selects. Read [version-checked runtime cases](references/runtime-ownership-cases.md) for ownership, timing, shared animation, assets, geometry/events, profiling and corrections to upstream examples. Prefer those substantive official sources to this entrypoint summary.
 
 PixiJS renders a scene graph through its renderer and manages display objects and GPU resources. It does not determine an application's domain rules. Identify the Pixi major version and renderer backend before using examples: initialization and texture APIs differ between versions.
 

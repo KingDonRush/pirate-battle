@@ -1,8 +1,12 @@
 # TanStack Query, Axios and consistent ranking/history — 10 points
 
-Contract: brief section 5 and [G10–G12](../ACCEPTANCE.md). This workflow owns typed REST consumption, cache consistency and durable idempotent result recovery. Workflow 05 implements the simulated server/conditions.
+> **Read contract:** project procedure for this rubric criterion. Recover intent through [the index](../index.md), read the relevant [company requirement](../../CHALLENGE.md) and apply [common engineering](../policies/engineering.md). Load only the selected skills; reenter the index if task or evidence is unclear.
+
+Contract: brief section 5 and [G10–G12](../../docs/acceptance.md). This workflow owns typed REST consumption, cache consistency and durable idempotent result recovery. Workflow 05 implements the simulated server/conditions.
 
 ## Specialized knowledge to load
+
+Selected entrypoints: [Query identity/cache/mutations](../skills/tanstack-query-engineering/SKILL.md); [Axios transport](../skills/axios-http/SKILL.md); [TypeScript boundaries](../skills/typescript-engineering/SKILL.md).
 
 Use Query identity/state/pagination/cancellation/mutation/persistence material, Axios transport/error/interceptor guidance and TypeScript runtime validation. Verify examples against Query 5.104.0 and Axios 1.20.0. The research probes distinguish client cancellation from server-side cancellation and a timeout from an uncommitted write.
 

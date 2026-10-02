@@ -1,5 +1,7 @@
 # Acceptance matrix
 
+> **Read contract:** solution documentation, not task tracking or authorization. Use it for the named subject; recover uncertain task context through [the index](../.agents/index.md) and check the [company brief](../CHALLENGE.md) before a material decision.
+
 Source: [official brief](../CHALLENGE.md), snapshot `315891441be81ca0bff75cf3c2b0cd2f27f119cd`. Current state: preflight only. **No rubric category is verified yet.** Keep the original weights; do not invent point values for individual tests.
 
 ## Rubric and evidence

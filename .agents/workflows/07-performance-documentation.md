@@ -1,10 +1,14 @@
 # Performance and documentation — 5 points
 
-Contract: brief sections 9 and 11, [P01–P02 and D01–D03](../ACCEPTANCE.md). This workflow owns measured performance, reproducibility and the final documentation/public-delivery evidence.
+> **Read contract:** project procedure for this rubric criterion. Recover intent through [the index](../index.md), read the relevant [company requirement](../../CHALLENGE.md) and apply [common engineering](../policies/engineering.md). Load only the selected skills; reenter the index if task or evidence is unclear.
+
+Contract: brief sections 9 and 11, [P01–P02 and D01–D03](../../docs/acceptance.md). This workflow owns measured performance, reproducibility and the final documentation/public-delivery evidence.
 
 ## Specialized knowledge to load
 
-Use official Pixi performance/resource guidance and browser Performance/Memory methods. Apply Vite asset/build and Vercel build/publication knowledge to the actual artifact. Use [DEPLOYMENT.md](../DEPLOYMENT.md) for this project's selected settings and existing authorization.
+Selected entrypoints: [Pixi profiling/resource ownership](../skills/pixijs-engineering/SKILL.md); [Vite build/assets](../skills/vite-tooling/SKILL.md); [Vercel access/source identity](../skills/vercel-deployment/SKILL.md).
+
+Use official Pixi performance/resource guidance and browser Performance/Memory methods. Apply Vite asset/build and Vercel build/publication knowledge to the actual artifact. Use [deployment guidance](../../docs/deployment.md) for this project's selected settings and existing authorization.
 
 ## Decisions and execution
 

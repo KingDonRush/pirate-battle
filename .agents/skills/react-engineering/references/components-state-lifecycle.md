@@ -1,5 +1,7 @@
 # React: component identity, composition, state and lifecycle
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Research scope: client React 19, with version-sensitive alternatives called out. This is an engineering synthesis from React's API/learning material and the reviewed Vercel component/performance packages. It supplies reusable decisions; the workflow assigns product roles and acceptance requirements.
 
 ## Topic graph and reading routes

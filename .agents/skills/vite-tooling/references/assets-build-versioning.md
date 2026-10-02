@@ -1,5 +1,7 @@
 # Vite: assets, runtime compatibility and built-artifact failures
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Research scope: official Vite assets/build/mode documentation, the installed Vite 8 toolchain and concrete browser-worker integration. Framework/runtime choices are supplied by the workflow.
 
 ## V1. The module graph and public resources solve different needs
