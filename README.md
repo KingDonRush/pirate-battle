@@ -4,7 +4,7 @@
 
 Preparation for the Jungle Gaming [game developer challenge](https://github.com/junglegaming/game-developer-challenge). The original brief is preserved in [CHALLENGE.md](CHALLENGE.md).
 
-**Current state:** the page is a startup scaffold. The repository has engineering instructions, researched technology references and GitHub tracking; structural validation is recorded separately from game acceptance. Combat, menus, ranking, history, failure scenarios and game regression tests still need implementation. Installing a required library does not satisfy the corresponding assessment criterion.
+**Current state:** the first playable slice has a supplied-art Pixi arena, name/guest entry, persistent options, real forward/rotation and hull collisions, simultaneous touch input, manual/blur/hidden pause, and animated coordinated reflow across desktop, portrait and landscape. Combat, durable match registration, data tabs and final profiling/publication are in the open delivery [Issue #12](https://github.com/KingDonRush/pirate-battle/issues/12). Partial checks do not award rubric points.
 
 ## Setup
 
@@ -59,3 +59,11 @@ Tests start and stop their own server rather than reusing an unidentified proces
 The current structural update creates no gameplay task or deployment. Future implementation needs its own scoped objective and current authorization.
 
 Controls, gameplay configuration, network scenario selection/reset and failure reproduction instructions will be added here with their implementation. Until then, proposed behavior is in the architecture and rubric workflows; acceptance remains Pending.
+
+## Current controls and responsive behavior
+
+W/Arrow Up advances; A/D or Left/Right rotate. Escape or Pause freezes play; Resume is explicit. Touch movement includes diagonal advance/turn targets with independent contacts. Space, Q and E are reserved for the next combat slice. Name is optional; Play as guest chooses a readable local name without changing combat seed. Options accept 60–180 integer seconds and 0.75–10-second spawns in 0.25 steps; changes apply to new matches.
+
+Resize or orientation freezes active time and input, animates the complete arena transform, then resumes only after the current layout has settled and rendered. A manual/focus pause remains paused. Portrait and landscape use identical physical geometry. Audio loops start from Play, pause with the match and release session voices on exit.
+
+A read-only `window.pirateBattle.observe()` projection exposes state for browser checks; `?seed=42` selects a reproducible combat seed. Tests never change world outcomes through that projection.

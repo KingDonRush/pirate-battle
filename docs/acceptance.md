@@ -2,7 +2,7 @@
 
 > **Read contract:** solution documentation, not task tracking or authorization. Use it for the named subject; recover uncertain task context through [the index](../.agents/index.md) and check the [company brief](../CHALLENGE.md) before a material decision.
 
-Source: [official brief](../CHALLENGE.md), snapshot `315891441be81ca0bff75cf3c2b0cd2f27f119cd`. Current state: preflight only. **No rubric category is verified yet.** Keep the original weights; do not invent point values for individual tests.
+Source: [official brief](../CHALLENGE.md), snapshot `315891441be81ca0bff75cf3c2b0cd2f27f119cd`. Current state: first playable arena candidate under Issue #13; combat/data/final delivery remain pending. **No rubric category is verified yet.** Keep the original weights; do not invent point values for individual tests.
 
 ## Rubric and evidence
 
@@ -53,3 +53,7 @@ Shared fixtures and handlers must support: success; empty lists; several pages; 
 ## Preflight evidence boundary
 
 The startup smoke test checks React boot, one supplied logo, service worker activation, reload and horizontal overflow. It demonstrates environment readiness only. It earns no self-assigned game points. Replace it with game flow tests once those paths cover startup.
+
+## First playable slice evidence
+
+Issue #13 candidate includes real movement/rotation, hull-island/arena blocking, name/guest and persistent options, asset retry/late-load cancellation, explicit pause/time-debt clearing, generation-based coordinated reflow and concurrent native touch cancellation. Local optimized check passed 20 cases on Chromium desktop/mobile; root Strict Mode development checks passed 10 targeted cases. Normal lint/types/format/structure/build passed. Rendered review covered menu and 320×568, 568×320, 768×1024 and 1280×720 arena layouts and corrected the water tile selection. This is partial evidence for G01–G03/G07/G09, not complete verification of those groups or a rubric grade. Integration evidence belongs in the Issue/PR.
