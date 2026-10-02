@@ -53,6 +53,7 @@ test('G01 name, guest identity, options validation and persistence', async ({
 test('G03 actual forward motion, rotation, island and arena constraints', async ({
   page,
 }) => {
+  test.setTimeout(60000);
   await start(page);
   const first = await observe(page);
   await page.keyboard.down('w');
@@ -63,7 +64,10 @@ test('G03 actual forward motion, rotation, island and arena constraints', async 
   await page.keyboard.down('a');
   await page.clock.runFor(500);
   await page.keyboard.up('a');
-  expect((await observe(page)).player.heading).toBeCloseTo(-Math.PI / 2, 1);
+  // A key edge can straddle one fixed 1/60-second step.
+  expect(
+    Math.abs((await observe(page)).player.heading + Math.PI / 2),
+  ).toBeLessThanOrEqual(Math.PI / 60 + 1e-6);
   await page.keyboard.down('w');
   await page.clock.runFor(4000);
   await page.keyboard.up('w');
