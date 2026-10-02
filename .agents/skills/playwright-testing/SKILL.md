@@ -9,6 +9,8 @@ metadata:
 
 # Playwright browser testing
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Read [behavioral, clock, network and visual cases](references/behavior-clock-network-visual.md) for assertion meaning, context/external-state isolation, time advancement, service workers, multi-pointer input, screenshot baselines and failure diagnosis. Reviewed external tooling preferences do not require installing another CLI.
 
 Playwright executes browser interactions and observes their results. A passing assertion establishes its checked behavior, not every requirement in a product. Identify the installed Playwright/browser versions, projects, operating system and required device contexts before adding tests.

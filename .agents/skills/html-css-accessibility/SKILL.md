@@ -9,6 +9,8 @@ metadata:
 
 # HTML, CSS and accessibility
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Read [interaction, layout and feedback cases](references/interaction-layout-feedback.md) for semantic actions, dialog focus, asynchronous tabs, held concurrent pointers, reflow/targets, contrast/motion/copy and evidence limits. Distinguish formal accessibility requirements from product-specific recommendations.
 
 HTML supplies structure and interaction semantics; CSS presents and adapts them. Begin with the user's task, existing design vocabulary and target viewport/input conditions. A visual resemblance alone does not establish usability.

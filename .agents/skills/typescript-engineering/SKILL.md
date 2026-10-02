@@ -9,6 +9,8 @@ metadata:
 
 # TypeScript engineering
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Read [contracts and validation cases](references/contracts-validation-design.md) for unchecked inputs, discriminated states, optional/undefined/null, finite numeric values, checked lookup, readonly/satisfies, generic design and compiler compatibility. Use the actual boundary being changed to select the case.
 
 TypeScript checks assumptions at compilation. Network data, storage contents, user input and parsed files still require runtime validation. Start by identifying the installed compiler, build transformation, module target and existing lint rules; a newer compiler may exceed another tool's supported range.

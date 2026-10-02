@@ -8,3 +8,5 @@ package-lock.json
 CHALLENGE.md
 
 .agents/skills/vercel-composition-patterns/
+
+.agents/skills/git-commit/

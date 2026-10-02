@@ -9,6 +9,8 @@ metadata:
 
 # Vite tooling
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Read [asset/build/version cases](references/assets-build-versioning.md) for imported versus public resources, companion URLs, base/refresh, type/runtime/plugin compatibility, modes, lazy-chunk recovery and reproducibility. Verify the optimized artifact rather than assuming dev behavior proves deployment.
 
 Vite's development server and production build resolve modules and assets differently. A successful development page does not prove the built artifact can load from its deployment base. Read package scripts, the lockfile, Node engines and plugin peer ranges before changing versions.

@@ -1,0 +1,30 @@
+name: Engineering task
+description: Define an objective, its requirement, acceptance and evidence.
+title: ''
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective and reason
+      description: Describe the resulting behavior and why this change is needed.
+    validations:
+      required: true
+  - type: textarea
+    id: requirement
+    attributes:
+      label: Requirements and boundaries
+      description: Cite applicable company requirements, affected rubric workflows and scope limits. Record conflicts before changing code.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance and dependencies
+      description: Name observable checks and dependent Issues. Project status is separate from acceptance.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and outcome
+      description: Add revision, scenario, environment, result and PR/CI links as work occurs. No invented prior runs or private data.

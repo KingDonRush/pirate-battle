@@ -1,8 +1,12 @@
 # Playwright E2E and visual regression — 10 points
 
-Contract: brief section 8, all [G01–G12](../ACCEPTANCE.md), and reviewed menu/arena/result baselines. This workflow owns evidence quality and the browser test harness; each implementation workflow still owns its behavior.
+> **Read contract:** project procedure for this rubric criterion. Recover intent through [the index](../index.md), read the relevant [company requirement](../../CHALLENGE.md) and apply [common engineering](../policies/engineering.md). Load only the selected skills; reenter the index if task or evidence is unclear.
+
+Contract: brief section 8, all [G01–G12](../../docs/acceptance.md), and reviewed menu/arena/result baselines. This workflow owns evidence quality and the browser test harness; each implementation workflow still owns its behavior.
 
 ## Specialized knowledge to load
+
+Selected entrypoints: [Playwright isolation/clock/visual evidence](../skills/playwright-testing/SKILL.md).
 
 Use Playwright locator/actionability/assertion, context/fixture, clock, touch, service-worker/network, visual baseline and trace research. Read the installed-version notes before adopting CLI or screenshot defaults from an external skill. Do not install another browser-control CLI just to follow a package's preferred tool.
 

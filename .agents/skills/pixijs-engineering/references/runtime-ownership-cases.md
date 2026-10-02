@@ -1,6 +1,8 @@
 # PixiJS: version-checked runtime and resource cases
 
-The primary specialization is the official 26-skill collection already shipped in `pixi.js@8.21.0`, covering 65 Markdown files and substantive examples/references. Its package identity is locked through npm; the reviewed npm gitHead is `ecd3797cf9b57766b045f3eea8388db9677744f8`. Read the relevant specialized skill through `../../../node_modules/pixi.js/skills/` from the skill root. This supplement records decisions and exceptions established against installed code rather than silently treating every example as correct.
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
+The primary specialization is the official 26-skill collection already shipped in `pixi.js@8.21.0`, covering 65 Markdown files and substantive examples/references. Its package identity is locked through npm; the reviewed npm gitHead is `ecd3797cf9b57766b045f3eea8388db9677744f8`. Locate `pixi.js/skills/` in the host's installed dependency and read only the relevant specialized skill. This supplement records decisions and exceptions established against installed code rather than silently treating every example as correct.
 
 ## P1. Application lifetime is not leaf lifetime
 

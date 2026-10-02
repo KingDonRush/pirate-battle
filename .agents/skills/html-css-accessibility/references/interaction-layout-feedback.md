@@ -1,5 +1,7 @@
 # HTML/CSS: interaction semantics, layout and readable feedback
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 This chapter applies the W3C interaction patterns and WCAG understanding pages to concrete web interface cases. A guideline's formal requirement, an engineering recommendation and a selected product design are different claims. The workflow supplies the actual audience, art, language and layouts.
 
 ## U1. A visual action needs an interaction contract

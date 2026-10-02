@@ -9,6 +9,8 @@ metadata:
 
 # TanStack Query engineering
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Read [cache, mutation and recovery cases](references/cache-mutations-recovery.md) for identity, data/fetch state, freshness/retention, pagination, stale-response cancellation, mutation identity and durable pending work. The cases include observed behavior of the installed Query/Axios/MSW versions and identify a rejected blanket Date-key claim.
 
 TanStack Query owns asynchronous remote state and its cache. It does not replace local UI or continuous computation state. Identify the installed major version and framework adapter, then map each resource's identity, freshness requirements and write behavior.

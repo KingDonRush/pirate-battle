@@ -1,8 +1,12 @@
 # MSW and reproducible failure scenarios — 5 points
 
-Contract: brief section 6 and supporting [G10–G12](../ACCEPTANCE.md). This workflow owns the network mock contract, fixture state and failure timing. Workflow 04 owns client response/recovery.
+> **Read contract:** project procedure for this rubric criterion. Recover intent through [the index](../index.md), read the relevant [company requirement](../../CHALLENGE.md) and apply [common engineering](../policies/engineering.md). Load only the selected skills; reenter the index if task or evidence is unclear.
+
+Contract: brief section 6 and supporting [G10–G12](../../docs/acceptance.md). This workflow owns the network mock contract, fixture state and failure timing. Workflow 04 owns client response/recovery.
 
 ## Specialized knowledge to load
+
+Selected entrypoints: [MSW network/state/scenarios](../skills/msw-mocking/SKILL.md); [Axios timeout/cancellation](../skills/axios-http/SKILL.md).
 
 Use MSW browser/Node lifecycle, handler ordering, stateful fixtures, delay/error and isolation research. Match the installed MSW 2.15.0 API rather than assuming current-major examples are interchangeable. Consult Playwright network guidance for service-worker interception limitations.
 

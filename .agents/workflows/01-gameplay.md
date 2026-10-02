@@ -1,8 +1,12 @@
 # Gameplay, rules, collisions and enemy behavior — 35 points
 
-Contract: brief section 2 and [G03–G09](../ACCEPTANCE.md). This workflow owns combat correctness. Rendering supplies feedback and the test workflow supplies browser execution; neither may fabricate the rule result.
+> **Read contract:** project procedure for this rubric criterion. Recover intent through [the index](../index.md), read the relevant [company requirement](../../CHALLENGE.md) and apply [common engineering](../policies/engineering.md). Load only the selected skills; reenter the index if task or evidence is unclear.
+
+Contract: brief section 2 and [G03–G09](../../docs/acceptance.md). This workflow owns combat correctness. Rendering supplies feedback and the test workflow supplies browser execution; neither may fabricate the rule result.
 
 ## Specialized knowledge to load
+
+Selected entrypoints: [TypeScript](../skills/typescript-engineering/SKILL.md); [Pixi timing/math](../skills/pixijs-engineering/SKILL.md); [Playwright controls/time](../skills/playwright-testing/SKILL.md).
 
 Use TypeScript boundary/state guidance for configuration and events; the Pixi ticker/math material for coordinate/time integration; and the clock/input material in Playwright when verifying a rule. For algorithm choices read the original [fixed-timestep analysis](https://gafferongames.com/post/fix_your_timestep/), [collision primitives/casts](https://box2d.org/documentation/md_collision.html) and [A* introduction](https://www.redblobgames.com/pathfinding/a-star/introduction.html). These sources inform implementation; the candidate implements the rules, as the brief requires.
 

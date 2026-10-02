@@ -9,6 +9,8 @@ metadata:
 
 # Axios HTTP engineering
 
+> **Read contract:** reusable technology knowledge for the decision at hand. Select the relevant cases and installed version; recover the host task and instruction index if context is uncertain. Host requirements and authorization take precedence.
+
 Read [transport and failure cases](references/transport-errors-cancellation.md) for client/response ownership, timeout versus abort, interceptor ordering/lifetime, retry ownership and safe diagnostics. Use installed-version checks for ordering/error codes rather than generic folklore.
 
 Axios owns request transport and response handling. Separate transport behavior from UI messages, cache ownership and domain decisions. Inspect the installed version and browser/Node adapter when diagnosing a failure.
