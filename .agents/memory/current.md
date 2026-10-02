@@ -1,25 +1,27 @@
 # Current technical checkpoint
 
-> **Read contract:** last observed technical context, not task truth or authorization. On resume consult the live Issue/PR, actual branch/diff and owned-resource record, then select [the applicable intent](../index.md). Update after significant progress or interruption.
+> **Read contract:** last observed context, not task truth or authorization. On resume consult live GitHub, actual branch/diff/revision and owned-resource state, then select [the applicable intent](../index.md). Relevant later changes invalidate affected evidence.
 
-## Observation: October 2, 2026
+## Closed observation: October 2, 2026
 
-- Objective: complete structural governance and verification only, under [Issue #1](https://github.com/KingDonRush/pirate-battle/issues/1).
-- Branch observed: `chore/agent-kernel`; base revision `01d5db73e5d16f525d5e7953fa50af5c6a0e8dfd`. The migration is committed at `387849b04b1d1f48ad325b2fe549210d37473c39` and proposed by [PR #8](https://github.com/KingDonRush/pirate-battle/pull/8). Read its live head; this checkpoint commit will change the branch revision.
-- Baseline: [PR #7](https://github.com/KingDonRush/pirate-battle/pull/7) merged; [#2](https://github.com/KingDonRush/pirate-battle/issues/2) completed. The public fork retains the company's ancestry.
-- Active owners: [kernel/conformity #3](https://github.com/KingDonRush/pirate-battle/issues/3), [disciplines #4](https://github.com/KingDonRush/pirate-battle/issues/4), [organization/memory #5](https://github.com/KingDonRush/pirate-battle/issues/5). [Validation/integration #6](https://github.com/KingDonRush/pirate-battle/issues/6) remains pending.
-- Tracking: [public Project](https://github.com/users/KingDonRush/projects/1) linked to the fork, with six structural Issues, the required statuses and P0/P1/P2. This checkpoint is not a second backlog.
+**Structural preparation is completed. No task is active and no game work has started.**
 
-## Facts, evidence and limits
+[Issue #1](https://github.com/KingDonRush/pirate-battle/issues/1) and five sub-Issues #2–#6 are closed as completed; the [public Project](https://github.com/users/KingDonRush/projects/1) records Done. Reconcile future state there instead of treating this checkpoint as a backlog.
 
-The frozen brief is the company requirements source. Seven workflows have moved under `.agents`; common policies and scoped knowledge routes exist. No gameplay or deployment was started and no next game task exists.
+Verified structural source: main merge ef9a4ba88f4c53c9a8b62fe9f3fd745f4698b122 from [PR #8](https://github.com/KingDonRush/pirate-battle/pull/8), after [baseline PR #7](https://github.com/KingDonRush/pirate-battle/pull/7). Closure documentation changes HEAD; read the real revision and latest Actions for new signoff. This observation does not claim its own final commit hash.
 
-Baseline checks passed before migration: optimized desktop/mobile startup checks, development Strict Mode startup checks and revision-linked Actions. Those results are historical for the changing instruction tree. The migration checker/scenario review and local production/development startup checks now pass. Main protection and Project configuration were read back. Clean reproduction and integrated-main CI remain pending; this observation is not final signoff.
+## Facts and evidence
 
-Architecture proposals are owned by [ARCHITECTURE.md](../../ARCHITECTURE.md). All game acceptance is owned by [the matrix](../../docs/acceptance.md) and remains Pending. There are no new unverified technical hypotheses promoted to facts.
+- The kernel/index, seven weighted procedures, common engineering/Git/compliance policies and frozen company reference are integrated.
+- Fork/remotes, public table/options, native task hierarchy/dependencies and main protection were read back.
+- [Integrated structural CI](https://github.com/KingDonRush/pirate-battle/actions/runs/37013012387) passed at the verified merge.
+- A clean detached checkout passed install, structural/lint/type/format/build checks, two production startup cases and two development Strict Mode startup cases. [The structural report](../../docs/reports/structure.md) owns commands, source identities, scenarios and limits.
+- The temporary checkout, owned research/build/report intermediates and merged preparation branches were removed. Verification servers exited; other tasks' resources were preserved. The task's host cleanup record has no remaining entries.
 
-## Next action inside this task
+No active technical hypotheses exist. Architecture proposals remain in [ARCHITECTURE.md](../../ARCHITECTURE.md); all game acceptance remains Pending in [the matrix](../../docs/acceptance.md). Readiness checks do not establish gameplay, accessibility, profiling or published-game coverage.
 
-Verify PR #8 against its live head, integrate through protected main and reproduce a clean checkout, then reconcile live Issues/Project and close owned resources. Do not open the first playable task.
+## Scope and reentry
 
-Host hygiene records are private operational cleanup state, outside Git. They contain exact owned temporary resources; inspect the configured record before creating substitutes. They are not technical memory or task history.
+No gameplay, deployment or next playable Issue was started. No local tasks/RUN ledger exists. There is no next action selected for the completed task; later user instructions define further work.
+
+Recover the kernel/index, live task state and tree before future action. Preserve company compliance, current authorization, public technical/private-data boundaries and source-review limits. Use the host's pending-resource record only for owned resources needing closure; a read-only question creates no cleanup record.
