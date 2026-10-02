@@ -1,0 +1,10 @@
+node_modules/
+dist/
+artifacts/
+assets/
+.agents/skills/vercel-react-best-practices/
+public/mockServiceWorker.js
+package-lock.json
+CHALLENGE.md
+
+.agents/skills/vercel-composition-patterns/
