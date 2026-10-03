@@ -253,6 +253,14 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
       returnByValue: true,
     });
     const reachable = await summarizeHeap(protocol, ownerNames);
+    for (const role of ['runtime', 'scene']) {
+      const owner = reachable.ownerObjects[role];
+      if (owner && !owner.ambiguous)
+        expect(
+          owner.count,
+          'Disposed ' + role + ' must not remain rooted',
+        ).toBe(0);
+    }
     portCounts.push(reachable.nativeObjects.MessagePort ?? 0);
     samples.push({
       cycle: cycle + 1,
@@ -287,7 +295,7 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
     contentType: 'application/json',
   });
   expect(
-    new Set(portCounts).size,
-    'MSW observation ports must not accumulate',
-  ).toBe(1);
+    portCounts.at(-1),
+    'Ports must return to the post-warmup baseline rather than accumulate',
+  ).toBeLessThanOrEqual(portCounts[0]!);
 });

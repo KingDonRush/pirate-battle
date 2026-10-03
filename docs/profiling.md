@@ -67,3 +67,5 @@ The direct terrain groups meet the target in this declared workload without rein
 ## Evidence limits
 
 This is one hardware/browser/seed/configuration and five comparable cycles, not worst-case entities, physical-phone performance or infinite retention. Physical Android/iOS/tablet tests and subjective audible mix were not performed. Output mute, nodes, source WAV properties and bounded digital levels cannot establish perceived latency, masking or loop seams. Exact JSON/frame/resource/build manifests and HTML reports belong to the current [delivery evidence](acceptance.md).
+
+The post-Options confirmation sample again completed180active seconds near60FPS. One resource sequence was3,3,4,3,3 MessagePorts, with zero rooted runtime/scene owners and bounded browser-pending paths. An initial exact-equality assertion misclassified that transient as accumulation; the corrected gate requires return to the post-warmup baseline and explicitly checks absence of rooted runtime/scene owners. The original51→91 stream leak would fail this gate. Final confirmation JSON/HTML/source identity is separate from this labelled diagnostic.
