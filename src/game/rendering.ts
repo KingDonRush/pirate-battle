@@ -3,6 +3,8 @@ import {
   Graphics,
   Sprite,
   TilingSprite,
+  Rectangle,
+  type Renderer,
   type Texture,
 } from 'pixi.js';
 import type { GameAssets } from './assets';
@@ -11,7 +13,9 @@ import type { Ship, Simulation, CombatEvent, MatchSession } from './simulation';
 
 type ShipView = {
   sprite: Sprite;
-  bar: Graphics;
+  bar: Container;
+  fill: Sprite;
+  mask: Graphics;
   health: number;
   flashUntil: number;
 };
@@ -27,6 +31,9 @@ export class BattleScene {
   }
   readonly world = new Container();
   readonly overlays = new Container();
+  private background = new Container();
+  private backgroundTexture: Texture | null = null;
+  private backgroundSprite: Sprite | null = null;
   private ships = new Map<number, ShipView>();
   private balls = new Map<number, Sprite>();
   private effects: Effect[] = [];
@@ -41,15 +48,135 @@ export class BattleScene {
       height: session.config.level.height,
     });
     water.tileScale.set(2.4);
-    water.tint = 0x9dcbd5;
-    this.world.addChild(water);
-    for (const island of session.config.level.islands) {
-      const sprite = new Sprite(assets.island);
-      sprite.position.set(island.x, island.y);
-      sprite.width = island.width;
-      sprite.height = island.height;
-      this.world.addChild(sprite);
+    water.tint = 0xcfeff4;
+    this.background.addChild(water);
+    this.world.addChild(this.background);
+    const worldClip = new Graphics()
+      .rect(0, 0, session.config.level.width, session.config.level.height)
+      .fill(0xffffff);
+    this.background.addChild(worldClip);
+    this.background.mask = worldClip;
+    // Both shores and their masks share the collision geometry. Interior art
+    // repeats at a uniform scale instead of stretching the painted texture.
+    for (const [texture, inset, tint] of [
+      [assets.sand, 0, 0xdbdbdc],
+      [assets.grass, 64, 0xa7c4e2],
+    ] as const) {
+      const ground = new Container();
+      const tileWidth = texture.width * 1.2,
+        tileHeight = texture.height * 1.2;
+      // Mirrored adjacent cells share edge pixels, avoiding visible atlas seams.
+      for (let row = 0; row * tileHeight < session.config.level.height; row++) {
+        for (let col = 0; col * tileWidth < session.config.level.width; col++) {
+          const tile = new Sprite(texture);
+          tile.scale.set(col % 2 ? -1.2 : 1.2, row % 2 ? -1.2 : 1.2);
+          tile.position.set(
+            (col + (col % 2)) * tileWidth,
+            (row + (row % 2)) * tileHeight,
+          );
+          tile.tint = tint;
+          ground.addChild(tile);
+        }
+      }
+      const mask = new Graphics();
+      if (inset === 0) {
+        for (const island of session.config.level.islands)
+          mask
+            .roundRect(
+              island.x,
+              island.y,
+              island.width,
+              island.height,
+              island.radius,
+            )
+            .fill(0xffffff);
+      } else {
+        // Erode the union rather than each region: connected shores have no
+        // artificial beach strip at an internal join. Merge rows into spans.
+        const inside = (x: number, y: number) =>
+          session.config.level.islands.some((island) => {
+            const cx = Math.max(
+              island.x + island.radius,
+              Math.min(island.x + island.width - island.radius, x),
+            );
+            const cy = Math.max(
+              island.y + island.radius,
+              Math.min(island.y + island.height - island.radius, y),
+            );
+            return (x - cx) ** 2 + (y - cy) ** 2 <= island.radius ** 2;
+          });
+        const offsets = Array.from({ length: 64 }, (_, i) => ({
+          x: Math.cos((i * Math.PI) / 32) * inset,
+          y: Math.sin((i * Math.PI) / 32) * inset,
+        }));
+        const green = (x: number, y: number) =>
+          inside(x, y) &&
+          offsets.every((offset) => inside(x + offset.x, y + offset.y));
+        for (let y = 0; y < session.config.level.height; y += 4) {
+          let start: number | null = null;
+          for (let x = 0; x <= session.config.level.width; x += 4) {
+            const present =
+              x < session.config.level.width && green(x + 2, y + 2);
+            if (present && start === null) start = x;
+            if (!present && start !== null) {
+              mask.rect(start, y, x - start, 4).fill(0xffffff);
+              start = null;
+            }
+          }
+        }
+      }
+      this.background.addChild(ground, mask);
+      ground.mask = mask;
     }
+    if (session.config.level.version === 'reference-v2') {
+      const decoration = (name: string, x: number, y: number, size = 64) => {
+        const texture = assets.terrain.get(name);
+        if (!texture) return;
+        const sprite = new Sprite(texture);
+        sprite.position.set(x, y);
+        sprite.width = size;
+        sprite.height = size;
+        this.background.addChild(sprite);
+      };
+      for (const x of [56, 120, 184]) decoration('horizontal', x, 8);
+      decoration('horizontal-cannon', 128, 8);
+      for (const y of [32, 80]) decoration('vertical', 216, y);
+      for (const x of [240, 304, 368]) decoration('horizontal', x, 80);
+      decoration('gate', 292, 80);
+      decoration('vertical', 384, -56);
+      decoration('vertical-cannon', 384, 8);
+      decoration('vertical', 384, 72);
+      for (const [x, y] of [
+        [48, 0],
+        [208, 0],
+        [208, 80],
+        [368, 80],
+      ])
+        decoration('tower', x ?? 0, y ?? 0, 72);
+      decoration('palm', 128, 156, 88);
+      decoration('small-palm', 216, 252, 72);
+      decoration('leaves', 448, 8, 80);
+      decoration('small-palm', 936, 476, 64);
+      decoration('palm', 924, 560, 88);
+      decoration('moss-rock', 368, 164, 76);
+      decoration('moss-stone', 768, 568, 88);
+      decoration('rock', -8, 8, 72);
+    }
+  }
+  prepareBackground(renderer: Renderer, width: number, height: number) {
+    // Measured static shore masks/tile draws are flattened once per renderer.
+    // This texture belongs to the session; source atlas textures stay shared.
+    const cached = renderer.generateTexture({
+      target: this.background,
+      frame: new Rectangle(0, 0, width, height),
+      resolution: 2,
+    });
+    this.backgroundSprite?.destroy();
+    this.backgroundTexture?.destroy(true);
+    this.backgroundTexture = cached;
+    this.background.removeFromParent();
+    this.backgroundSprite = new Sprite(cached);
+    this.world.addChildAt(this.backgroundSprite, 0);
   }
   private texture(name: string): Texture {
     const texture = this.assets.ships.get(name);
@@ -63,7 +190,7 @@ export class BattleScene {
     for (const [id, visual] of this.ships)
       if (!alive.has(id)) {
         visual.sprite.destroy();
-        visual.bar.destroy();
+        visual.bar.destroy({ children: true });
         this.ships.delete(id);
       }
     for (const ship of current) this.ship(ship, view, time, alpha);
@@ -141,9 +268,16 @@ export class BattleScene {
     let visual = this.ships.get(ship.id);
     if (!visual) {
       const sprite = new Sprite(this.texture(name));
+      sprite.scale.set(1.2);
       sprite.anchor.set(0.5);
-      const bar = new Graphics();
-      visual = { sprite, bar, health: -1, flashUntil: 0 };
+      const bar = new Container(),
+        frame = new Sprite(this.assets.health.frame),
+        fill = new Sprite(this.assets.health.green),
+        mask = new Graphics();
+      fill.position.set(24, 12);
+      bar.addChild(frame, fill, mask);
+      fill.mask = mask;
+      visual = { sprite, bar, fill, mask, health: -1, flashUntil: 0 };
       this.ships.set(ship.id, visual);
       this.world.addChild(sprite);
       this.overlays.addChild(bar);
@@ -162,36 +296,38 @@ export class BattleScene {
       Math.PI;
     const warning = ship.activeAt > time;
     visual.sprite.alpha = warning ? 0.45 : 1;
-    if (
-      visual.health !== ship.health ||
-      visual.bar.context.instructions.length === 0
-    ) {
-      visual.bar
+    if (visual.health !== ship.health) {
+      visual.fill.texture =
+        ship.kind === 'player' && ratio > 0.5
+          ? this.assets.health.green
+          : this.assets.health.red;
+      visual.mask
         .clear()
-        .roundRect(0, 0, 42, 7, 3)
-        .fill(0x142b35)
-        .stroke({
-          color: ship.kind === 'player' ? 0xffedb8 : 0xcba253,
-          width: 1,
-        });
-      if (ratio > 0)
-        visual.bar
-          .roundRect(2, 2, 38 * ratio, 3, 1)
-          .fill(ratio > 0.5 ? 0x76d995 : ratio > 0.25 ? 0xffd26d : 0xff8872);
-      if (ship.kind === 'chaser')
-        visual.bar
-          .moveTo(20, 10)
-          .lineTo(23, 14)
-          .lineTo(17, 14)
-          .closePath()
-          .fill(0xf9ac99);
-      if (ship.kind === 'shooter') visual.bar.circle(21, 12, 2).fill(0x93cdff);
+        .rect(24, 12, 112 * ratio, 15)
+        .fill(0xffffff);
       visual.health = ship.health;
     }
     const projected = worldToView(position.x, position.y, view);
+    const barScale = Math.max(0.2625, view.scale * 0.4),
+      barWidth = 160 * barScale;
+    visual.bar.scale.set(barScale);
+    let barY = Math.max(2, projected.y - 88 * view.scale - 22 * barScale);
+    // Keep an above-ship indicator clear of the desktop score/time controls.
+    if (
+      view.width >= 1000 &&
+      view.height >= 650 &&
+      Math.abs(view.angle) < 0.001 &&
+      projected.x + barWidth / 2 > view.width - 500 &&
+      barY < 96 &&
+      barY + 40 * barScale > 28
+    )
+      barY = 2;
     visual.bar.position.set(
-      Math.max(2, Math.min(view.width - 44, projected.x - 21)),
-      Math.max(2, projected.y - 62 * view.scale - 14),
+      Math.max(
+        2,
+        Math.min(view.width - barWidth - 2, projected.x - barWidth / 2),
+      ),
+      barY,
     );
     visual.bar.alpha = warning ? 0.6 : 1;
   }
@@ -217,6 +353,7 @@ export class BattleScene {
   }
   observe() {
     return {
+      backgroundTextures: Number(this.backgroundTexture !== null),
       ships: this.ships.size,
       projectiles: this.balls.size,
       effects: this.effects.length,
@@ -226,6 +363,10 @@ export class BattleScene {
     this.world.removeFromParent();
     this.overlays.removeFromParent();
     this.world.destroy({ children: true });
+    this.backgroundTexture?.destroy(true);
+    this.backgroundTexture = null;
+    this.backgroundSprite = null;
+    if (!this.background.destroyed) this.background.destroy({ children: true });
     this.overlays.destroy({ children: true });
     this.ships.clear();
     this.balls.clear();

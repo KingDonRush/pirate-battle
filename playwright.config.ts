@@ -5,14 +5,16 @@ const port = Number(process.env.E2E_PORT ?? (development ? 5173 : 4173));
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
   throw new Error('E2E_PORT must be an integer from 1 to 65535.');
 }
-const baseURL = `http://127.0.0.1:${port}`;
+const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
+  timeout: 60000,
+  expect: { timeout: 10000 },
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
-  ...(process.env.CI ? { workers: 2 } : {}),
+  workers: 2,
   reporter: [
     ['list'],
     ['html', { outputFolder: 'artifacts/playwright/report', open: 'never' }],
@@ -27,6 +29,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     serviceWorkers: 'allow',
+    launchOptions: { args: ['--mute-audio'] },
   },
   projects: [
     {
@@ -47,10 +50,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], headless: false },
     },
   ],
-  webServer: {
-    command: `npm run ${development ? 'dev' : 'preview'} -- --port ${port}`,
-    url: baseURL,
-    reuseExistingServer: false,
-    timeout: 30_000,
-  },
+  ...(process.env.E2E_BASE_URL
+    ? {}
+    : {
+        webServer: {
+          command: `npm run ${development ? 'dev' : 'preview'} -- --port ${port}`,
+          url: baseURL,
+          reuseExistingServer: false,
+          timeout: 30_000,
+        },
+      }),
 });

@@ -8,10 +8,10 @@ async function observe(page: Page): Promise<Observation> {
     return state;
   });
 }
-async function start(page: Page) {
+async function start(page: Page, manual = false) {
   await page.clock.install({ time: new Date('2026-10-02T12:00:00Z') });
   await page.clock.pauseAt(new Date('2026-10-02T12:00:00.100Z'));
-  await page.goto('/?seed=42');
+  await page.goto('/?seed=42' + (manual ? '&clock=manual' : ''));
   await page
     .getByRole('button', { name: 'Play as guest', exact: true })
     .click();
@@ -59,33 +59,35 @@ test('G03 actual forward motion, rotation, island and arena constraints', async 
   page,
 }) => {
   test.setTimeout(60000);
-  await start(page);
+  await start(page, true);
   const first = await observe(page);
   await page.keyboard.down('w');
-  await page.clock.runFor(1000);
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 1000);
   await page.keyboard.up('w');
   const moved = await observe(page);
   expect(moved.player.y).toBeLessThan(first.player.y - 130);
-  await page.keyboard.down('a');
-  await page.clock.runFor(500);
-  await page.keyboard.up('a');
+  await page.keyboard.down('d');
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 500);
+  await page.keyboard.up('d');
   // A key edge can straddle one fixed 1/60-second step.
   expect(
-    Math.abs((await observe(page)).player.heading + Math.PI / 2),
+    Math.abs((await observe(page)).player.heading - Math.PI / 2),
   ).toBeLessThanOrEqual(Math.PI / 60 + 1e-6);
   await page.keyboard.down('w');
-  await page.clock.runFor(4000);
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 4000);
   await page.keyboard.up('w');
-  const west = await observe(page);
-  expect(west.player.x).toBeGreaterThanOrEqual(90);
-  expect(west.player.x).toBeLessThan(100);
-  await page.keyboard.down('d');
-  await page.clock.runFor(500);
-  await page.keyboard.up('d');
+  const east = await observe(page);
+  expect(east.player.x).toBeGreaterThan(1045);
+  expect(east.player.x).toBeLessThan(1055);
+  await page.keyboard.down('a');
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 500);
+  await page.keyboard.up('a');
   await page.keyboard.down('w');
-  await page.clock.runFor(4000);
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 4000);
   await page.keyboard.up('w');
-  expect((await observe(page)).player.y).toBeGreaterThanOrEqual(90);
+  const north = await observe(page);
+  expect(north.player.y).toBeGreaterThanOrEqual(102);
+  expect(north.player.y).toBeLessThan(108);
 });
 test('G07 pause and explicit resume clear held input and time debt', async ({
   page,
@@ -143,7 +145,9 @@ test('G09 latest reflow wins, time freezes, and exit releases the arena', async 
 test('G02 failed asset can be retried', async ({ page, context }) => {
   let fail = true;
   await context.route('**/ships_miscellaneous_sheet*.png*', (route) =>
-    fail && route.request().resourceType() !== 'script'
+    fail &&
+    route.request().resourceType() !== 'script' &&
+    !/[?&](?:url|import)(?:[=&]|$)/.test(route.request().url())
       ? route.abort()
       : route.continue(),
   );
@@ -161,26 +165,19 @@ test('G02 failed asset can be retried', async ({ page, context }) => {
   ).toBeVisible();
 });
 test('G03 hull stops at the visible island coast', async ({ page }) => {
-  await start(page);
-  await page.keyboard.down('a');
-  await page.clock.runFor(500);
-  await page.keyboard.up('a');
+  await start(page, true);
   await page.keyboard.down('w');
-  await page.clock.runFor(1400);
-  await page.keyboard.up('w');
-  await page.keyboard.down('d');
-  await page.clock.runFor(500);
-  await page.keyboard.up('d');
-  await page.keyboard.down('w');
-  await page.clock.runFor(3000);
+  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 3000);
   await page.keyboard.up('w');
   const atCoast = await observe(page);
-  expect(atCoast.player.y).toBeGreaterThanOrEqual(339);
-  expect(atCoast.player.y).toBeLessThan(350);
+  // Upper shore y=156 plus the 62.4-unit capsule support, at most one step away.
+  expect(atCoast.player.y).toBeGreaterThanOrEqual(218.4);
+  expect(atCoast.player.y).toBeLessThan(221);
 });
 test('review first arena at portrait and landscape sizes', async ({
   page,
 }, testInfo) => {
+  test.setTimeout(60000);
   await page.goto('/');
   await page.screenshot({
     path: testInfo.outputPath('menu.png'),
@@ -274,7 +271,10 @@ test('G02 leaving a pending asset load cannot attach its late canvas', async ({
     release = resolve;
   });
   await context.route('**/ships_miscellaneous_sheet*.png*', async (route) => {
-    if (route.request().resourceType() === 'script') {
+    if (
+      route.request().resourceType() === 'script' ||
+      /[?&](?:url|import)(?:[=&]|$)/.test(route.request().url())
+    ) {
       await route.continue();
       return;
     }

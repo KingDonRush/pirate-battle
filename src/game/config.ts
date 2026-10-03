@@ -18,18 +18,32 @@ export const DEFAULT_SETTINGS: Settings = Object.freeze({
   reducedMotion: false,
 });
 
-export const LEVEL = Object.freeze({
-  width: 960,
+export type LevelDefinition = Readonly<{
+  width: number;
+  height: number;
+  version: string;
+  islands: readonly Readonly<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    radius: number;
+  }>[];
+}>;
+export const LEVEL: LevelDefinition = Object.freeze({
+  width: 1152,
   height: 640,
-  version: 'islands-v1',
+  version: 'reference-v2',
   islands: Object.freeze(
     [
-      { x: 192, y: 128, width: 160, height: 160, radius: 28 },
-      { x: 592, y: 352, width: 160, height: 160, radius: 28 },
+      { x: 0, y: -64, width: 608, height: 220, radius: 32 },
+      { x: 128, y: 80, width: 320, height: 240, radius: 32 },
+      { x: 368, y: 480, width: 408, height: 240, radius: 32 },
+      { x: 848, y: 396, width: 304, height: 324, radius: 32 },
+      { x: 736, y: 560, width: 160, height: 160, radius: 24 },
     ].map((island) => Object.freeze(island)),
   ),
 });
-
 export type WeaponConfig = Readonly<{
   damage: number;
   speed: number;
@@ -44,11 +58,16 @@ export type EnemyConfig = Readonly<{
   range: number;
 }>;
 export type MatchConfig = Readonly<{
-  version: 1;
-  level: typeof LEVEL;
+  version: 1 | 2;
+  level: LevelDefinition;
   duration: number;
   spawnInterval: number;
-  player: Readonly<{ health: number; speed: number; turnSpeed: number }>;
+  player: Readonly<{
+    health: number;
+    speed: number;
+    turnSpeed: number;
+    start?: Readonly<{ x: number; y: number; heading: number }>;
+  }>;
   weapons: Readonly<{
     front: WeaponConfig;
     left: WeaponConfig;
@@ -72,11 +91,16 @@ export type MatchConfig = Readonly<{
 
 export function createConfig(settings: Settings): MatchConfig {
   return Object.freeze({
-    version: 1,
+    version: 2,
     level: LEVEL,
     duration: settings.duration,
     spawnInterval: settings.spawnInterval,
-    player: Object.freeze({ health: 100, speed: 150, turnSpeed: Math.PI }),
+    player: Object.freeze({
+      health: 100,
+      speed: 150,
+      turnSpeed: Math.PI,
+      start: Object.freeze({ x: 540, y: 370, heading: 0 }),
+    }),
     weapons: Object.freeze({
       front: Object.freeze({
         damage: 20,
@@ -128,7 +152,7 @@ export function createConfig(settings: Settings): MatchConfig {
       distribution: Object.freeze(['chaser', 'shooter'] as const),
     }),
     chaserImpact: 25,
-    hull: Object.freeze({ radius: 24, halfLength: 28, boundaryMargin: 40 }),
+    hull: Object.freeze({ radius: 28.8, halfLength: 33.6, boundaryMargin: 40 }),
   });
 }
 

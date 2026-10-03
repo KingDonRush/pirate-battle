@@ -16,14 +16,14 @@ export function fitWorld(
     s = Math.abs(Math.sin(angle));
   const worldWidth = c * LEVEL.width + s * LEVEL.height,
     worldHeight = s * LEVEL.width + c * LEVEL.height;
-  return {
+  return Object.freeze({
     x: width / 2,
     y: height / 2,
     scale: Math.min(width / worldWidth, height / worldHeight),
     angle,
     width,
     height,
-  };
+  });
 }
 export function worldToView(x: number, y: number, view: ViewTransform) {
   const dx = x - LEVEL.width / 2,

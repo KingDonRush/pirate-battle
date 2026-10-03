@@ -1,7 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodeRecord } from '../../src/data/contracts';
+// Keep DOM/API/network failure evidence without recording every accelerated
+// combat frame; those captures compete with software rendering in CI.
+test.use({ trace: { mode: 'retain-on-failure', screenshots: false } });
 async function condition(page: Page, value: string) {
-  await page.getByText('Network conditions', { exact: true }).click();
+  if (!(await page.getByLabel('Scenario', { exact: true }).isVisible()))
+    await page.getByText('Network conditions', { exact: true }).click();
   await page.getByLabel('Scenario', { exact: true }).selectOption(value);
 }
 async function completed(page: Page) {
@@ -37,6 +41,7 @@ test('G10 ranking pagination, empty/failure/background states and keyboard tabs'
   page,
 }) => {
   await page.goto('/?clock=manual&seed=42');
+  await page.getByRole('tab', { name: 'Ranking', exact: true }).click();
   await expect(page.getByRole('tabpanel')).toContainText('Captain Flint');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByRole('tabpanel')).toContainText('Page 2 of 3');
@@ -57,9 +62,11 @@ test('G10 ranking pagination, empty/failure/background states and keyboard tabs'
   );
   await page.getByLabel('Scenario', { exact: true }).selectOption('http-400');
   await expect(page.getByRole('tabpanel').getByRole('alert')).toBeVisible();
+  await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
   await expect(
     page.getByRole('button', { name: 'Play', exact: true }),
   ).toBeEnabled();
+  await page.getByRole('tab', { name: 'Ranking', exact: true }).click();
   await page.getByLabel('Scenario', { exact: true }).selectOption('slow');
   await expect(page.getByRole('tabpanel').getByRole('status')).toContainText(
     /Updating|Loading/,
@@ -188,11 +195,17 @@ test('G10 separate tab failures and reproducible multi-page history reset', asyn
     'No completed battles',
   );
   expect(await database(page, 'records')).toHaveLength(0);
+  await expect(
+    page.getByRole('button', { name: 'Last result', exact: true }),
+  ).toHaveCount(0);
   expect(await database(page, 'outbox')).toHaveLength(0);
 });
 test('G12 acknowledged browser queries cannot regress to a late pre-write read', async ({
   page,
 }) => {
+  // The CI trace measured 21.1s + 27.5s for the two real-rule battles.
+  // Preserve the full post-write assertions and their normal wait budget.
+  test.setTimeout(90000);
   await page.goto('/?clock=manual&seed=42');
   await completed(page);
   await expect(page.getByRole('status')).toHaveText('Match saved.');
@@ -202,7 +215,9 @@ test('G12 acknowledged browser queries cannot regress to a late pre-write read',
     if (request.url().includes('/api/ranking')) reads++;
   });
   await condition(page, 'out-of-order');
+  await page.getByRole('tab', { name: 'Ranking', exact: true }).click();
   await expect.poll(() => reads).toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
   const second = await completed(page);
   await expect(page.getByRole('status')).toHaveText('Match saved.');
   await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
@@ -220,4 +235,42 @@ test('G12 acknowledged browser queries cannot regress to a late pre-write read',
       .map(decodeRecord)
       .filter((record) => record.matchId === second),
   ).toHaveLength(1);
+});
+
+test('G10 scoped reset removes pending data before automatic Success recovery', async ({
+  page,
+}) => {
+  await page.goto('/?clock=manual&seed=42');
+  await condition(page, 'end-unavailable');
+  await completed(page);
+  await expect
+    .poll(async () => (await database(page, 'outbox')).length)
+    .toBe(1);
+  await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
+  await condition(page, 'end-unavailable');
+  await page
+    .getByRole('button', { name: 'Reset demo data', exact: true })
+    .click();
+  await page
+    .getByRole('button', { name: 'Reset matches', exact: true })
+    .click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByLabel('Scenario', { exact: true })).toHaveValue(
+    'success',
+  );
+  await expect(
+    page.getByRole('button', { name: 'Last result', exact: true }),
+  ).toHaveCount(0);
+  expect(await database(page, 'outbox')).toHaveLength(0);
+  expect(await database(page, 'records')).toHaveLength(0);
+  await page.getByRole('tab', { name: 'Match History', exact: true }).click();
+  await expect(page.getByRole('tabpanel')).toContainText(
+    'No completed battles',
+  );
+  await page.reload();
+  await expect(
+    page.getByRole('heading', { name: 'Pirate Battle' }),
+  ).toBeVisible();
+  expect(await database(page, 'outbox')).toHaveLength(0);
+  expect(await database(page, 'records')).toHaveLength(0);
 });
