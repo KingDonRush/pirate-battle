@@ -2,7 +2,9 @@
 
 > **Read contract:** solution documentation, not task state or authorization. Recover intent through the [index](../.agents/index.md) and preserve the [company brief](../CHALLENGE.md). Publication evidence is revision-bound.
 
-The approved target is a public Vercel release in the personal **kingdonrush / kingdonrushs-projects** account, using project **pirate-battle**. The repository is [KingDonRush/pirate-battle](https://github.com/KingDonRush/pirate-battle). The project exists with Vite, Node22, repository root, `npm ci`, `npm run build` and `dist`. Project-scoped password/SSO/IP protection is disabled for evaluator access; unrelated account/project settings are preserved. Final public deployment verification is still pending.
+The approved target is a public Vercel release in the personal **kingdonrush / kingdonrushs-projects** account, using project **pirate-battle**. The repository is [KingDonRush/pirate-battle](https://github.com/KingDonRush/pirate-battle). The project exists with Vite, Node22, repository root, `npm ci`, `npm run build` and `dist`. Project-scoped password/SSO/IP protection is disabled for evaluator access; unrelated account/project settings are preserved.
+
+[Public game](https://pirate-battle-three-gray.vercel.app): the first release serves clean source `a600c89de0483dbfefb354964ccac802670f443f`. Unauthenticated initial load, exact build identity, worker/script content and no-cache header, 404 for an absent asset and the complete Chromium desktop/mobile suite passed: 99 passed, two intentional duplicate-view skips, zero retries, including native focus, real time/death, multitouch and durable mocked registration/recovery. The final integrated source will replace this first artifact after the remaining correction/gates; inspect `/build-info.json` for the live identity and the delivery manifest for hash correspondence.
 
 ## Build and source correspondence
 

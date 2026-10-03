@@ -38,19 +38,8 @@ async function report(name: string, value: unknown) {
     JSON.stringify(value, null, 2) + '\n',
   );
 }
-test('P01 real 180-active-second optimized combat profile', async ({
-  page,
-  browser,
-}, info) => {
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  const identity = (await (
-    await page.request.get('/build-info.json')
-  ).json()) as unknown;
-  await play(page);
-  const focus = await page.context().newCDPSession(page);
-  await focus.send('Emulation.setFocusEmulationEnabled', { enabled: true });
-  const hardware = await page.evaluate(() => {
+async function graphicsInfo(page: Page) {
+  return page.evaluate(() => {
     const canvas = document.querySelector('canvas')!;
     const gl = (canvas.getContext('webgl2') ??
       canvas.getContext('webgl')) as WebGLRenderingContext;
@@ -67,6 +56,20 @@ test('P01 real 180-active-second optimized combat profile', async ({
       dpr: devicePixelRatio,
     };
   });
+}
+test('P01 real 180-active-second optimized combat profile', async ({
+  page,
+  browser,
+}, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const identity = (await (
+    await page.request.get('/build-info.json')
+  ).json()) as unknown;
+  await play(page);
+  const focus = await page.context().newCDPSession(page);
+  await focus.send('Emulation.setFocusEmulationEnabled', { enabled: true });
+  const hardware = await graphicsInfo(page);
   const protocol = await browser.newBrowserCDPSession();
   const system = await protocol.send('SystemInfo.getInfo');
   const config = createConfig({ ...DEFAULT_SETTINGS, duration: 180 });
@@ -160,13 +163,20 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
 }, info) => {
   const protocol = await context.newCDPSession(page);
   await protocol.send('HeapProfiler.enable');
+  const identity = (await (
+    await page.request.get('/build-info.json')
+  ).json()) as unknown;
+  let hardware: Awaited<ReturnType<typeof graphicsInfo>> | undefined;
   const samples: unknown[] = [];
+  const portCounts: number[] = [];
 
   const cycleCount = process.env.PROFILE_WARMUP_AUDIT === '1' ? 10 : 5;
   for (let cycle = 0; cycle < cycleCount; cycle++) {
     // Keep the same document after warmup; a reload would hide retained owners.
-    if (cycle === 0) await play(page, 180);
-    else {
+    if (cycle === 0) {
+      await play(page, 180);
+      hardware = await graphicsInfo(page);
+    } else {
       await page.getByRole('button', { name: 'Play', exact: true }).click();
       await expect
         .poll(() =>
@@ -243,6 +253,7 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
       returnByValue: true,
     });
     const reachable = await summarizeHeap(protocol, ownerNames);
+    portCounts.push(reachable.nativeObjects.MessagePort ?? 0);
     samples.push({
       cycle: cycle + 1,
       active: active?.resources,
@@ -255,8 +266,18 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
     await report('resources-partial', { browser: browser.version(), samples });
   }
   const result = {
+    identity,
     browser: browser.version(),
+    hardware,
+    os: {
+      platform: os.platform(),
+      release: os.release(),
+      cpu: os.cpus()[0]?.model,
+    },
+    config: createConfig({ ...DEFAULT_SETTINGS, duration: 180 }),
+    seed: 42,
     samples,
+    portCounts,
     method:
       'Same document, same 8 s movement/firing and UI abandonment; cleanup observation then release diagnostic owner and force GC at each point. Each point includes a heap category/native-object summary and representative strong-root paths. Minified constructor-name collisions are explicitly ambiguous. Browser audio output is muted; Web Audio nodes remain real. Shared assets, one audio context/buffers and library pools are intentional. PROFILE_WARMUP_AUDIT=1 extends the five required cycles to ten to investigate growth.',
   };
@@ -265,4 +286,8 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
     body: JSON.stringify(result, null, 2),
     contentType: 'application/json',
   });
+  expect(
+    new Set(portCounts).size,
+    'MSW observation ports must not accumulate',
+  ).toBe(1);
 });

@@ -67,7 +67,7 @@ export async function summarizeHeap(
     edgeOffset += (heap.nodes[i + countIndex] ?? 0) * edgeStride;
     if (
       (type === 'object' || type === 'native') &&
-      /^(?:HTMLCanvasElement|WebGLRenderingContext|WebGL2RenderingContext|ResizeObserver|AudioBufferSourceNode|AudioContext)$/.test(
+      /^(?:HTMLCanvasElement|WebGLRenderingContext|WebGL2RenderingContext|ResizeObserver|AudioBufferSourceNode|AudioContext|MessagePort)$/.test(
         name,
       )
     ) {

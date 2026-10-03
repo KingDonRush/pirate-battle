@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodeRecord } from '../../src/data/contracts';
+// Keep DOM/API/network failure evidence without recording every accelerated
+// combat frame; those captures compete with software rendering in CI.
+test.use({ trace: { mode: 'retain-on-failure', screenshots: false } });
 async function condition(page: Page, value: string) {
   if (!(await page.getByLabel('Scenario', { exact: true }).isVisible()))
     await page.getByText('Network conditions', { exact: true }).click();
@@ -200,7 +203,9 @@ test('G10 separate tab failures and reproducible multi-page history reset', asyn
 test('G12 acknowledged browser queries cannot regress to a late pre-write read', async ({
   page,
 }) => {
-  test.setTimeout(60000);
+  // The CI trace measured 21.1s + 27.5s for the two real-rule battles.
+  // Preserve the full post-write assertions and their normal wait budget.
+  test.setTimeout(90000);
   await page.goto('/?clock=manual&seed=42');
   await completed(page);
   await expect(page.getByRole('status')).toHaveText('Match saved.');

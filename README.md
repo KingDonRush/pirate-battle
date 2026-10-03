@@ -4,6 +4,8 @@
 
 A browser naval shooter built with React, TypeScript and PixiJS. Navigate the islands, fight Chasers and Shooters, and survive until the active match clock expires. The supplied challenge artwork anchors the menus, ships, weapons, terrain and HUD. The complete-game references guide desktop composition; mobile portrait and landscape preserve the same combat world.
 
+[Play the public game](https://pirate-battle-three-gray.vercel.app). The production worker and browser-local mock database require no login. [Deployment](docs/deployment.md) identifies the checked release and source correspondence.
+
 The frozen [company brief](CHALLENGE.md) is the source of requirements. [Acceptance evidence](docs/acceptance.md) distinguishes checked behavior from remaining delivery work. Delivery is tracked in [Issue #12](https://github.com/KingDonRush/pirate-battle/issues/12); a green test is not a self-awarded grade.
 
 ## Run locally
@@ -32,6 +34,8 @@ npm run profile
 ```
 
 `npm run check` runs the normal structure, lint, types, formatting, build and browser suite. Headed native-focus checks need a display; Linux CI uses `xvfb-run -a npm run check`. The optimized preview defaults to port 4173. If another application owns that port, use `npm run preview -- --port 4175` or `E2E_PORT=4175 npm run test:e2e`; do not stop the other application. Install Chromium with `PLAYWRIGHT_SKIP_BROWSER_GC=1` to preserve shared browser versions.
+
+Tests silence only their browser's audio output; game sound preferences and desktop audio remain unchanged. [Profiling](docs/profiling.md) includes the real 180-second 60FPS sample, five required resource cycles extended to ten for retention analysis, the hardware/backend and the reproduction flags.
 
 ## Controls and player identity
 
@@ -85,4 +89,4 @@ Playwright tests use isolated contexts, seeds, real keys/native multi-pointer in
 
 Reviewed menu/arena/result baselines are under `tests/e2e/visual`. Regenerate with `--update-snapshots` only after inspecting the difference. The HTML report and failure traces are written under `artifacts/playwright`; useful final evidence is delivered with the source revision. The long keyboard deadline test disables per-sample trace screenshots/DOM snapshots to bound overhead while preserving input/API/source records.
 
-See [architecture](ARCHITECTURE.md), [asset provenance/licenses](docs/assets.md), [deployment](docs/deployment.md) and [acceptance](docs/acceptance.md) for implementation ownership and evidence. Physical mobile-device testing and subjective listening cannot be inferred from emulated Chromium or audio-node counts.
+See [architecture](ARCHITECTURE.md), [asset provenance/licenses](docs/assets.md), [reference presentation review](docs/visual-review.md), [profiling](docs/profiling.md), [deployment](docs/deployment.md) and [acceptance](docs/acceptance.md) for implementation ownership and evidence. Physical mobile-device testing and subjective listening cannot be inferred from emulated Chromium or audio-node counts.
