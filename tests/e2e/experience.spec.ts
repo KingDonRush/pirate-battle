@@ -300,11 +300,8 @@ declare global {
     terminalCue?: { starts: number; stops: number };
   }
 }
-test('death retains an animated ending, terminal sound and immediate single result', async ({
-  page,
-}, info) => {
-  test.setTimeout(process.env.CI ? 180000 : 60000);
-  await page.addInitScript(() => {
+async function observeTerminalCue(page: Page, blurOnStart = false) {
+  await page.addInitScript((blurOnStart) => {
     window.terminalCue = { starts: 0, stops: 0 };
     // Observe real Web Audio calls without changing their clock or buffers.
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -312,16 +309,28 @@ test('death retains an animated ending, terminal sound and immediate single resu
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const stop = AudioBufferSourceNode.prototype.stop;
     AudioBufferSourceNode.prototype.start = function (...args) {
-      if (Math.abs((this.buffer?.duration ?? 0) - 1.6) < 0.001)
+      const terminal = Math.abs((this.buffer?.duration ?? 0) - 1.6) < 0.001;
+      start.apply(this, args);
+      if (terminal) {
         window.terminalCue!.starts++;
-      return start.apply(this, args);
+        // The real context clock continues while visual test time is paused.
+        // Trigger the owner event while the actual cue is still active.
+        if (blurOnStart)
+          queueMicrotask(() => window.dispatchEvent(new Event('blur')));
+      }
     };
     AudioBufferSourceNode.prototype.stop = function (...args) {
       if (Math.abs((this.buffer?.duration ?? 0) - 1.6) < 0.001)
         window.terminalCue!.stops++;
       return stop.apply(this, args);
     };
-  });
+  }, blurOnStart);
+}
+test('death retains an animated ending, terminal sound and immediate single result', async ({
+  page,
+}, info) => {
+  test.setTimeout(process.env.CI ? 180000 : 60000);
+  await observeTerminalCue(page);
   await start(page, true);
   await expect
     .poll(() =>
@@ -823,6 +832,7 @@ test('terminal cancellation on blur leaves no suspended combat or result voices'
   page,
 }) => {
   test.setTimeout(process.env.CI ? 180000 : 60000);
+  await observeTerminalCue(page, true);
   await start(page, true);
   await expect
     .poll(() =>
@@ -832,14 +842,11 @@ test('terminal cancellation on blur leaves no suspended combat or result voices'
     )
     .toBe(14);
   await page.evaluate(() => window.pirateBattle!.advance(120000));
-  await page.clock.runFor(100);
-  expect(
-    await page.evaluate(
-      () => window.pirateBattle!.observe().resources.audio.terminalVoices,
-    ),
-  ).toBe(1);
-  // Synthetic blur exercises the owner handler. The headed focus test uses a real tab switch.
-  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  // Synthetic blur is dispatched immediately after the real cue starts.
+  // The headed focus test separately uses a real tab switch.
+  await expect
+    .poll(() => page.evaluate(() => window.terminalCue))
+    .toEqual({ starts: 1, stops: 1 });
   expect(
     await page.evaluate(
       () => window.pirateBattle!.observe().resources.audio.voices,
