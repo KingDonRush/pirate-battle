@@ -111,14 +111,36 @@ test('G09 latest reflow wins, time freezes, and exit releases the arena', async 
   await start(page);
   await page.keyboard.down('w');
   await page.clock.runFor(200);
+  const initialRevision = (await observe(page)).hud.reflowRevision;
   await page.setViewportSize({ width: 360, height: 640 });
-  await page.clock.runFor(20);
+  // Browser viewport commands and native resize delivery have separate clocks.
+  // Establish the actual freeze before comparing simulation time across targets.
+  await expect
+    .poll(async () => {
+      const state = await observe(page);
+      return (
+        state.hud.state === 'reflowing' &&
+        state.hud.reflowRevision > initialRevision
+      );
+    })
+    .toBe(true);
   const frozen = await observe(page);
+  await page.clock.runFor(20);
   await page.setViewportSize({ width: 667, height: 375 });
+  await expect
+    .poll(async () => (await observe(page)).hud.reflowRevision)
+    .toBeGreaterThan(frozen.hud.reflowRevision);
+  const intermediate = await observe(page);
+  expect(intermediate.hud.state).toBe('reflowing');
+  expect(intermediate.elapsed).toBe(frozen.elapsed);
   await page.clock.runFor(20);
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect
+    .poll(async () => (await observe(page)).hud.reflowRevision)
+    .toBeGreaterThan(intermediate.hud.reflowRevision);
   await page.clock.runFor(100);
   const changing = await observe(page);
+  expect(changing.hud.state).toBe('reflowing');
   expect(changing.elapsed).toBe(frozen.elapsed);
   await page.clock.runFor(500);
   const settled = await observe(page);
