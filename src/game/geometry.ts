@@ -99,13 +99,14 @@ export function canOccupy(
 ) {
   const [a, b] = hullEnds(position, heading, config.hull.halfLength);
   const radius = config.hull.radius,
-    margin = radius + config.hull.boundaryMargin;
+    margin = radius + config.hull.boundaryMargin,
+    contactTolerance = 1e-7;
   for (const p of [a, b])
     if (
-      p.x < bounds.x + margin ||
-      p.y < bounds.y + margin ||
-      p.x > bounds.x + bounds.width - margin ||
-      p.y > bounds.y + bounds.height - margin
+      p.x < bounds.x + margin - contactTolerance ||
+      p.y < bounds.y + margin - contactTolerance ||
+      p.x > bounds.x + bounds.width - margin + contactTolerance ||
+      p.y > bounds.y + bounds.height - margin + contactTolerance
     )
       return false;
   for (const island of config.level.islands) {
@@ -130,6 +131,27 @@ export function canOccupy(
         if (pointSegmentDistance({ x, y }, a, b) < radius + r) return false;
   }
   return true;
+}
+
+export function containHull(
+  position: Point,
+  heading: number,
+  config: MatchConfig,
+  bounds: Rect,
+): Point {
+  const margin = config.hull.radius + config.hull.boundaryMargin;
+  const extentX = margin + Math.abs(Math.sin(heading)) * config.hull.halfLength;
+  const extentY = margin + Math.abs(Math.cos(heading)) * config.hull.halfLength;
+  return {
+    x: Math.max(
+      bounds.x + extentX,
+      Math.min(bounds.x + bounds.width - extentX, position.x),
+    ),
+    y: Math.max(
+      bounds.y + extentY,
+      Math.min(bounds.y + bounds.height - extentY, position.y),
+    ),
+  };
 }
 
 export function castIsland(

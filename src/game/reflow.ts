@@ -140,7 +140,8 @@ export class ReflowCoordinator {
     this.targetAngle = this.startAngle + delta;
     this.measuredAt = now;
     this.stableFrames = 0;
-    this.coverage = coverage;
+    // A layout generation owns frozen measurements, never live entity references.
+    this.coverage = coverage.map(({ x, y }) => ({ x, y }));
     this.active = true;
     this.freeze();
   }

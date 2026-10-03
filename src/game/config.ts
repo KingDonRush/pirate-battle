@@ -63,7 +63,7 @@ export type EnemyConfig = Readonly<{
   range: number;
 }>;
 export type MatchConfig = Readonly<{
-  version: 1 | 2 | 3;
+  version: 1 | 2 | 3 | 4;
   level: LevelDefinition;
   duration: number;
   spawnInterval: number;
@@ -96,7 +96,7 @@ export type MatchConfig = Readonly<{
 
 export function createConfig(settings: Settings): MatchConfig {
   return Object.freeze({
-    version: 3,
+    version: 4,
     level: LEVEL,
     duration: settings.duration,
     spawnInterval: settings.spawnInterval,

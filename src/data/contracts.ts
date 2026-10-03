@@ -79,7 +79,10 @@ export function decodeConfig(value: unknown): MatchConfig {
     spawn = object(v.spawn),
     level = object(v.level);
   if (
-    (v.version !== 1 && v.version !== 2 && v.version !== 3) ||
+    (v.version !== 1 &&
+      v.version !== 2 &&
+      v.version !== 3 &&
+      v.version !== 4) ||
     !Array.isArray(level.islands) ||
     level.islands.length < 1 ||
     level.islands.length > 32

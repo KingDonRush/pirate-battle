@@ -2,6 +2,7 @@ import type { MatchConfig, PlayerIdentity, WeaponConfig } from './config';
 import {
   angleDifference,
   canOccupy,
+  containHull,
   castHull,
   castIsland,
   distance,
@@ -278,8 +279,12 @@ export class Simulation {
     ship.previous.y = ship.y;
     ship.previousHeading = ship.heading;
     const heading = ship.heading + turn * turnSpeed * STEP;
-    if (canOccupy(ship, heading, this.session.config, this.arena))
+    const rotated = containHull(ship, heading, this.session.config, this.arena);
+    if (canOccupy(rotated, heading, this.session.config, this.arena)) {
       ship.heading = heading;
+      ship.x = rotated.x;
+      ship.y = rotated.y;
+    }
     const x = ship.x + Math.sin(ship.heading) * speed * STEP,
       y = ship.y - Math.cos(ship.heading) * speed * STEP;
     if (canOccupy({ x, y }, ship.heading, this.session.config, this.arena)) {
