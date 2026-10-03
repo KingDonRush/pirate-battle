@@ -33,7 +33,7 @@ async function start(page: Page, duration = 120) {
 test('G06 real keyboard battle reaches Time up and restarts with new identity', async ({
   page,
 }, info) => {
-  test.setTimeout(180000);
+  test.setTimeout(process.env.CI ? 300000 : 180000);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {

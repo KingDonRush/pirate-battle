@@ -8,7 +8,7 @@ test('review reference-size menu, options, log, arena, pause and result', async 
     info.project.name !== 'chromium-desktop',
     'Native reference comparison uses desktop DPR 1.',
   );
-  test.setTimeout(60000);
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   await page.setViewportSize({ width: 1800, height: 1000 });
   await page.goto('/?seed=42&clock=manual');
   await page.getByLabel('Display name').fill('Captain Jack');

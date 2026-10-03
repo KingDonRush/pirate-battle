@@ -55,7 +55,7 @@ test('G05 real enemy routes clear obstructing shores while respecting hull geome
 test('G05 real keyboard navigation and defence makes enemies bypass an island', async ({
   page,
 }, info) => {
-  test.setTimeout(60000);
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   const config = createConfig(DEFAULT_SETTINGS);
   await page.goto('/?seed=42&clock=manual');
   await page

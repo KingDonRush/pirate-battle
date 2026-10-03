@@ -12,7 +12,7 @@ for (const [name, width, height] of [
         info.project.name === 'chromium-mobile' && name === 'desktop',
         'Desktop fidelity uses native DPR 1; the mobile project covers phone portrait and landscape.',
       );
-      test.setTimeout(60000);
+      test.setTimeout(process.env.CI ? 180000 : 60000);
       const errors: string[] = [];
       page.on('pageerror', (error) => errors.push(error.message));
       page.on('console', (message) => {

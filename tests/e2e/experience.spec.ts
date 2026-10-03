@@ -281,6 +281,7 @@ declare global {
 test('death retains an animated ending, terminal sound and immediate single result', async ({
   page,
 }, info) => {
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   await page.addInitScript(() => {
     window.terminalCue = { starts: 0, stops: 0 };
     // Observe real Web Audio calls without changing their clock or buffers.
@@ -799,6 +800,7 @@ test('Escape cancels paused Options and abandonment before resuming the same mat
 test('terminal cancellation on blur leaves no suspended combat or result voices', async ({
   page,
 }) => {
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   await start(page, true);
   await expect
     .poll(() =>

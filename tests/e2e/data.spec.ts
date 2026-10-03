@@ -3,6 +3,9 @@ import { decodeRecord } from '../../src/data/contracts';
 import { selectNetwork as condition, openDemoNetwork } from '../support/menu';
 // Keep DOM/API/network failure evidence without recording every accelerated
 // combat frame; those captures compete with software rendering in CI.
+test.beforeEach(() => {
+  test.setTimeout(process.env.CI ? 240000 : 60000);
+});
 test.use({ trace: { mode: 'retain-on-failure', screenshots: false } });
 async function completed(page: Page) {
   await page.getByLabel('Display name').fill('Coral Captain');
@@ -98,7 +101,7 @@ test('G11 real completed match registers one record in both projections after re
 test('G11 unavailable registration survives refresh and permits another match before recovery', async ({
   page,
 }) => {
-  test.setTimeout(45000);
+  test.setTimeout(process.env.CI ? 240000 : 45000);
   await page.goto('/?clock=manual&seed=42');
   await condition(page, 'end-unavailable');
   const id = await completed(page);
@@ -132,7 +135,7 @@ test('G11 unavailable registration survives refresh and permits another match be
 test('G12 commit then timeout, refresh and repeated retry recover the original ID', async ({
   page,
 }) => {
-  test.setTimeout(45000);
+  test.setTimeout(process.env.CI ? 240000 : 45000);
   await page.goto('/?clock=manual&seed=42');
   await condition(page, 'commit-timeout');
   const id = await completed(page);
@@ -203,7 +206,7 @@ test('G12 acknowledged browser queries cannot regress to a late pre-write read',
 }) => {
   // The CI trace measured 21.1s + 27.5s for the two real-rule battles.
   // Preserve the full post-write assertions and their normal wait budget.
-  test.setTimeout(90000);
+  test.setTimeout(process.env.CI ? 300000 : 90000);
   await page.goto('/?clock=manual&seed=42');
   await completed(page);
   await expect(page.getByRole('status')).toHaveText('Match saved.');

@@ -58,7 +58,7 @@ test('G01 name, guest identity, options validation and persistence', async ({
 test('G03 actual forward motion, rotation, island and arena constraints', async ({
   page,
 }) => {
-  test.setTimeout(60000);
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   await start(page, true);
   const first = await observe(page);
   await page.keyboard.down('w');
@@ -185,7 +185,7 @@ test('G03 hull stops at the visible island coast', async ({ page }) => {
 test('review first arena at portrait and landscape sizes', async ({
   page,
 }, testInfo) => {
-  test.setTimeout(60000);
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   await page.goto('/');
   await page.screenshot({
     path: testInfo.outputPath('menu.png'),
