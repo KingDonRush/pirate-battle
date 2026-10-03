@@ -2,7 +2,7 @@
 
 > **Read contract:** measured source-bound evidence, not task state or authorization. The [company brief](../CHALLENGE.md) stays unchanged. Environment, workload and finite observation window bound these claims.
 
-The corrected `archipelago-v3` direct renderer was measured on clean source `16231ad5304ca20b806acca9e19dffe3831dfae9`, tree `c33073a291ada3863c969695e9671b810c2cdaee`. The profiling build manifest records every shipped file. Documentation-only integration must prove matching runtime bytes rather than silently attributing these measurements to a different implementation. The former cached `reference-v2` numbers are historical and are not substituted for this sample.
+The corrected `archipelago-v3` direct renderer was measured on clean source `16231ad5304ca20b806acca9e19dffe3831dfae9`, tree `c33073a291ada3863c969695e9671b810c2cdaee`. The profiling build manifest records every shipped file. Source/asset manifests distinguish documentation/harness changes and a later Options-only stylesheet correction. The latter changes dependency filenames; rules, renderer, input and audio sources are unchanged. The final delivery manifest identifies the final checked build and any confirming profile, rather than silently relabelling this sample. The former cached `reference-v2` numbers are historical and are not substituted for this sample.
 
 ## Reproduce
 

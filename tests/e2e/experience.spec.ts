@@ -56,6 +56,28 @@ test('complete viewport menu, Options tabs and help stay within their frame', as
       page.getByRole('button', { name: 'Play', exact: true }),
     ).toBeInViewport();
     await page.getByRole('button', { name: 'Options', exact: true }).click();
+    await page.evaluate(() => document.fonts.ready);
+    const tabs = await page.getByRole('tab').evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const range = document.createRange();
+        range.selectNodeContents(button);
+        const label = range.getBoundingClientRect(),
+          bounds = button.getBoundingClientRect();
+        return {
+          name: button.textContent,
+          fits:
+            label.left >= bounds.left &&
+            label.right <= bounds.right &&
+            label.top >= bounds.top &&
+            label.bottom <= bounds.bottom,
+        };
+      }),
+    );
+    expect(
+      tabs.every((tab) => tab.fits),
+      `${width}×${height}: ${JSON.stringify(tabs)}`,
+    ).toBe(true);
+    await page.screenshot({ path: info.outputPath(`options-${width}.png`) });
     for (const name of [
       'Game',
       'Controls',
