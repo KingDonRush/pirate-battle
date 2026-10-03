@@ -2,7 +2,7 @@
 
 > **Read contract:** measured source-bound evidence, not task state or authorization. The [company brief](../CHALLENGE.md) stays unchanged. Environment, workload and finite observation window bound these claims.
 
-The corrected `archipelago-v3` direct renderer was measured on clean source `16231ad5304ca20b806acca9e19dffe3831dfae9`, tree `c33073a291ada3863c969695e9671b810c2cdaee`. The profiling build manifest records every shipped file. Documentation-only integration must prove matching runtime bytes rather than silently attributing these measurements to a different implementation. The former cached `reference-v2` numbers are historical and are not substituted for this sample.
+The corrected `archipelago-v3` direct renderer was measured on clean source `16231ad5304ca20b806acca9e19dffe3831dfae9`, tree `c33073a291ada3863c969695e9671b810c2cdaee`. The profiling build manifest records every shipped file. Source/asset manifests distinguish documentation/harness changes and a later Options-only stylesheet correction. The latter changes dependency filenames; rules, renderer, input and audio sources are unchanged. The final delivery manifest identifies the final checked build and any confirming profile, rather than silently relabelling this sample. The former cached `reference-v2` numbers are historical and are not substituted for this sample.
 
 ## Reproduce
 
@@ -67,3 +67,5 @@ The direct terrain groups meet the target in this declared workload without rein
 ## Evidence limits
 
 This is one hardware/browser/seed/configuration and five comparable cycles, not worst-case entities, physical-phone performance or infinite retention. Physical Android/iOS/tablet tests and subjective audible mix were not performed. Output mute, nodes, source WAV properties and bounded digital levels cannot establish perceived latency, masking or loop seams. Exact JSON/frame/resource/build manifests and HTML reports belong to the current [delivery evidence](acceptance.md).
+
+The post-Options confirmation sample again completed180active seconds near60FPS. One resource sequence was3,3,4,3,3 MessagePorts, with zero rooted runtime/scene owners and bounded browser-pending paths. An initial exact-equality assertion misclassified that transient as accumulation; the corrected gate requires return to the post-warmup baseline and explicitly checks absence of rooted runtime/scene owners. The original51→91 stream leak would fail this gate. Final confirmation JSON/HTML/source identity is separate from this labelled diagnostic.

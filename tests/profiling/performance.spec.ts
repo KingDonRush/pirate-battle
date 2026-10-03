@@ -243,6 +243,14 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
       listeners: 0,
       audio: { contexts: 1, voices: 0, loops: 0 },
     });
+    // Compare equivalent completed menu paints, including asynchronous artwork.
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await Promise.all([...document.images].map((image) => image.decode()));
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+    });
     await protocol.send('HeapProfiler.collectGarbage');
     const heap = await protocol.send('Runtime.getHeapUsage');
     const dom = await protocol.send('Memory.getDOMCounters');
@@ -253,6 +261,14 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
       returnByValue: true,
     });
     const reachable = await summarizeHeap(protocol, ownerNames);
+    for (const role of ['runtime', 'scene']) {
+      const owner = reachable.ownerObjects[role];
+      if (owner && !owner.ambiguous)
+        expect(
+          owner.count,
+          'Disposed ' + role + ' must not remain rooted',
+        ).toBe(0);
+    }
     portCounts.push(reachable.nativeObjects.MessagePort ?? 0);
     samples.push({
       cycle: cycle + 1,
@@ -279,7 +295,7 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
     samples,
     portCounts,
     method:
-      'Same document, same 8 s movement/firing and UI abandonment; cleanup observation then release diagnostic owner and force GC at each point. Each point includes a heap category/native-object summary and representative strong-root paths. Minified constructor-name collisions are explicitly ambiguous. Browser audio output is muted; Web Audio nodes remain real. Shared assets, one audio context/buffers and library pools are intentional. PROFILE_WARMUP_AUDIT=1 extends the five required cycles to ten to investigate growth.',
+      'Same document, same 8 s movement/firing and UI abandonment; cleanup observation, release diagnostic owner, wait for decoded menu artwork and two completed presentation frames, then force GC at each equivalent point. Each point includes a heap category/native-object summary and representative strong-root paths. Minified constructor-name collisions are explicitly ambiguous. Browser audio output is muted; Web Audio nodes remain real. Shared assets, one audio context/buffers and library pools are intentional. PROFILE_WARMUP_AUDIT=1 extends the five required cycles to ten to investigate growth.',
   };
   await report('resources', result);
   await info.attach('resource-cycles', {
@@ -287,7 +303,7 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
     contentType: 'application/json',
   });
   expect(
-    new Set(portCounts).size,
-    'MSW observation ports must not accumulate',
-  ).toBe(1);
+    portCounts.at(-1),
+    'Ports must return to the post-warmup baseline rather than accumulate',
+  ).toBeLessThanOrEqual(portCounts[0]!);
 });
