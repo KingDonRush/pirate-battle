@@ -2,7 +2,7 @@
 
 > **Read contract:** measured solution evidence, not task tracking or authorization. Recover context through the [.agents index](../.agents/index.md) and preserve the [company brief](../CHALLENGE.md). The source, environment and finite observation window below bound every claim.
 
-The final real-time and retention profile ran on clean source `da5a2ed51679a1d256439728d29bfe78fa2ca4e8` (tree `01142e7a745a1fda500d53a7409b9875c993e047`). It includes the measured browser mock-stream cleanup. The public evidence package includes exact build/asset manifests so later documentation/test-only integration can establish unchanged runtime bytes. JSON reports and the profiling HTML report accompany [acceptance](acceptance.md).
+The final real-time and retention profile ran on clean source `3bc40a3e7baef037b1715ebe5355859ed869d87c` (tree `cfe466131a3368abfefcf972f64e486bac965873`). It includes the measured browser mock-stream cleanup. The public evidence package includes exact build/asset manifests so later documentation/test-only integration can establish unchanged runtime bytes. JSON reports and the profiling HTML report accompany [acceptance](acceptance.md).
 
 ## Reproduce
 
@@ -33,18 +33,18 @@ xvfb-run -a env PROFILE_VULKAN=1 PROFILE_WARMUP_AUDIT=1 E2E_PORT=4175 npm run pr
 | Build                                       | Optimized Vite output, clean source above, Node22.21.1                          |
 | Configuration                               | 180 active seconds; standard 3s alternating spawns; full default combat balance |
 | Seed / ruleset                              | 42 / `v1:f011c1cb59ce7d1307cd3b5416ac2e5812a626a37a39cddff7e3a7d85e935efa`      |
-| Completed outcome                           | Time up at exactly 180s; score59; HP55; 59 spawns; both enemy roles observed    |
-| Raw frames / interval sum                   | 10,801 / 180.0099s                                                              |
-| FPS                                         | **60.0023**                                                                     |
+| Completed outcome                           | Time up at exactly 180s; score59; HP70; 59 spawns; both enemy roles observed    |
+| Raw frames / interval sum                   | 10,801 / 180.0093s                                                              |
+| FPS                                         | **60.0025**                                                                     |
 | p95 raw frame interval                      | **17.40ms**                                                                     |
-| Maximum raw interval                        | **18.40ms**                                                                     |
-| Peak rendered ships / projectiles / effects | **2 / 14 / 7**                                                                  |
+| Maximum raw interval                        | **19.20ms**                                                                     |
+| Peak rendered ships / projectiles / effects | **2 / 11 / 7**                                                                  |
 | Peak audio voices                           | 14, including at most two loops                                                 |
 | Pauses / reflows / page errors              | 0 / 0 / 0                                                                       |
 
 The protocol selects an unobstructed approaching enemy, leads the shot and uses actual keyboard turns/front/left/right fire. It observes the simulation; it never writes HP, position, score or end state. Browser focus emulation is enabled for this diagnostic sample; genuine blur/hidden-tab behavior is tested separately with actual tab transitions. Loading/layout startup precedes the measured active window. Raw intervals include stalls; the simulation's 250ms catch-up cap is not used to hide them.
 
-This is a standard seeded workload, not a worst-case entity stress test or a physical-phone measurement. Other applications on the host are preserved. A previous 84.27s death prefix and an unsupported final screenshot timeout are retained as labelled diagnostics, not substituted for this passing sample. The final dedicated run passed both P01 and P02 in 4.6 minutes.
+This is a standard seeded workload, not a worst-case entity stress test or a physical-phone measurement. Other applications on the host are preserved. A previous 84.27s death prefix and an unsupported final screenshot timeout are retained as labelled diagnostics, not substituted for this passing sample. The final dedicated run passed both P01 and P02 in 4.5 minutes.
 
 ## P02: disposal and retained-memory investigation
 
@@ -52,20 +52,20 @@ Every cycle uses the same document: start, eight active seconds of real movement
 
 | Cycle | Post-GC JavaScript heap, bytes | DOM nodes | JS listeners |
 | ----- | -----------------------------: | --------: | -----------: |
-| 1     |                      7,349,156 |       249 |          188 |
-| 2     |                      7,720,884 |       249 |          188 |
-| 3     |                      7,907,784 |       325 |          229 |
-| 4     |                      8,006,500 |       249 |          188 |
-| 5     |                      8,190,552 |       249 |          188 |
-| 6     |                      8,256,788 |       325 |          229 |
-| 7     |                      8,287,956 |       249 |          188 |
-| 8     |                      8,375,484 |       325 |          229 |
-| 9     |                      8,671,456 |       249 |          188 |
-| 10    |                      8,758,256 |       325 |          229 |
+| 1     |                      7,377,144 |       249 |          188 |
+| 2     |                      7,766,188 |       325 |          229 |
+| 3     |                      7,924,576 |       325 |          229 |
+| 4     |                      8,044,100 |       325 |          229 |
+| 5     |                      8,236,528 |       325 |          229 |
+| 6     |                      8,245,024 |       249 |          188 |
+| 7     |                      8,289,460 |       249 |          188 |
+| 8     |                      8,351,940 |       249 |          188 |
+| 9     |                      8,688,760 |       249 |          188 |
+| 10    |                      8,757,564 |       325 |          229 |
 
 All ten cycles ended with zero live/pending Applications, canvases attached to the document, input/browser listeners, observers, owned tickers, background textures, ships, projectiles, effects and active audio voices/loops. Window listener counts stayed constant. Transient DOM/listener increases returned to the initial counts and did not accumulate. Unique runtime/scene constructor objects were absent from every post-GC heap. Pixi Application/ticker constructor names collide after minification; the report marks those counts ambiguous and does not treat them as instance counts.
 
-The overall heap still increased by 1,409,100 bytes. Category comparison accounts for 1,259,840 bytes (89.4% of that delta) in compiled **code**, with 50,032 bytes of strings and smaller browser/diagnostic structures. This supports compilation/diagnostic warm-up as the main observed growth, rather than retained combat worlds; it does not prove an indefinitely flat heap. Ten cycles are the stated observation window.
+The overall heap still increased by 1,380,420 bytes. Category comparison accounts for 1,251,148 bytes (90.6% of that delta) in compiled **code**, with 50,032 bytes of strings and smaller browser/diagnostic structures. This supports compilation/diagnostic warm-up as the main observed growth, rather than retained combat worlds; it does not prove an indefinitely flat heap. Ten cycles are the stated observation window.
 
 Native counts stayed bounded: two canvas objects, two WebGL1 objects, one WebGL2 object and one live application audio context. Strong-root paths show Blink per-context wrappers/pending activity and a compiled-module WebGL reference, not old runtime/scene owners. Pixi's installed `getTestContext` intentionally caches a capability-test context; that is consistent with the module-root reference. Stopped audio nodes retained by browser pending activity were 14, briefly 15, then 14 again; the application's voice map and connections were already empty. Shared decoded buffers and atlas sources remain owned by the still-open application for reuse. Closing the browser closes that final owner.
 
