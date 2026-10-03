@@ -8,6 +8,7 @@ const sizes = [
   [320, 568],
   [360, 640],
   [390, 844],
+  [412, 839],
   [568, 320],
   [667, 375],
   [844, 390],
@@ -32,6 +33,7 @@ for (const dpr of [1, 1.25, 1.5, 2, 3]) {
             page.evaluate(() => window.pirateBattle?.observe().hud.state),
           )
           .toBe('running');
+        await page.evaluate(() => document.fonts.ready);
         for (const [width, height] of sizes) {
           await page.setViewportSize({ width, height });
           await expect
@@ -55,12 +57,47 @@ for (const dpr of [1, 1.25, 1.5, 2, 3]) {
               .getBoundingClientRect();
             const targets = [
               ...document.querySelectorAll(
-                '.controls button,.battle-hud,.captain',
+                '.controls button,.battle-hud,.captain,.hud-health,.hud-counter,.game-pause',
               ),
             ]
               .map((element) => element.getBoundingClientRect())
               .filter((rect) => rect.width > 0);
             const canvas = document.querySelector('canvas')!;
+            // Measure future counter capacity without assigning a game score.
+            const probe = new OffscreenCanvas(1, 1).getContext('2d')!;
+            const compactHud =
+              innerWidth <= 700 ||
+              (innerHeight <= 480 && innerWidth > innerHeight);
+            const countersFit =
+              !compactHud ||
+              [...document.querySelectorAll('.hud-counter')].every(
+                (counter) => {
+                  const value = counter.querySelector('strong')!;
+                  const style = getComputedStyle(value);
+                  const panelStyle = getComputedStyle(counter);
+                  const panel = counter.getBoundingClientRect();
+                  const slot = value.getBoundingClientRect();
+                  const range = document.createRange();
+                  range.selectNodeContents(value);
+                  const text = range.getBoundingClientRect();
+                  probe.font =
+                    style.fontWeight +
+                    ' ' +
+                    style.fontSize +
+                    ' ' +
+                    style.fontFamily;
+                  const futureWidth = probe.measureText(
+                    counter.classList.contains('hud-score') ? '999' : '02:59',
+                  ).width;
+                  return (
+                    slot.width + 0.5 >= futureWidth &&
+                    text.left >=
+                      panel.left + parseFloat(panelStyle.borderLeftWidth) + 4 &&
+                    text.right <=
+                      panel.right - parseFloat(panelStyle.borderRightWidth) - 4
+                  );
+                },
+              );
             const view = window.pirateBattle!.observe().view!;
             const corners = [
               [0, 0],
@@ -108,6 +145,7 @@ for (const dpr of [1, 1.25, 1.5, 2, 3]) {
               hudAtTop:
                 document.querySelector('.battle-hud')!.getBoundingClientRect()
                   .bottom < 120,
+              countersFit,
             };
           });
           expect(state, {
@@ -119,7 +157,13 @@ for (const dpr of [1, 1.25, 1.5, 2, 3]) {
             fitted: true,
             resolution: true,
             hudAtTop: true,
+            countersFit: true,
           });
+          if (width === 412 && dpr === 3) {
+            await page.locator('.battle-hud').screenshot({
+              path: info.outputPath('mobile-hud.png'),
+            });
+          }
         }
         await page.screenshot({
           path: info.outputPath('layout-dpr-' + dpr + '.png'),

@@ -2,7 +2,9 @@
 
 > **Read contract:** measured source-bound evidence, not task state or authorization. The [company brief](../CHALLENGE.md) stays unchanged. Environment, workload and finite observation window bound these claims.
 
-The corrected `archipelago-v3` direct renderer was measured on clean source `16231ad5304ca20b806acca9e19dffe3831dfae9`, tree `c33073a291ada3863c969695e9671b810c2cdaee`. The profiling build manifest records every shipped file. Source/asset manifests distinguish documentation/harness changes and a later Options-only stylesheet correction. The latter changes dependency filenames; rules, renderer, input and audio sources are unchanged. The final delivery manifest identifies the final checked build and any confirming profile, rather than silently relabelling this sample. The former cached `reference-v2` numbers are historical and are not substituted for this sample.
+The fixed coast corridor, enemy routing, direct terrain renderer and compact HUD were measured on clean source `6c9d89cc14afdb25ccd21e0dee46dea6c9219340`, tree `c83e626fcbef4ffef6f542a82b40ae7df352988b`. P01 and P02 passed in the same uninterrupted optimized run, with zero retries. Its build manifest records the exact dependencies and all 67 shipped files. The final delivery manifest separately identifies the integrated/public source and verifies correspondence of the 66 runtime/static files; build-info records its own commit/time.
+
+Earlier cached-scenery and edge-only samples are historical after the coast/AI refinement. Their numbers are not substituted for this current measurement.
 
 ## Reproduce
 
@@ -19,53 +21,53 @@ The actual Linux/NVIDIA sample used an isolated display and ANGLE/Vulkan:
 xvfb-run -a env PROFILE_VULKAN=1 E2E_PORT=4175 npm run profile
 ```
 
-The profiler sets1800 ×1000/DPR1, seed38 and the normal180-second/3-second-spawn options through the interface. `PROFILE_VULKAN=1` omits an unsupported screenshot on that native surface; normal Chromium/Firefox journeys provide rendered evidence. `PROFILE_SOFTWARE=1` is a headless diagnostic and cannot reproduce the hardware claim. `PROFILE_WARMUP_AUDIT=1` extends the five resource cycles to ten if further warm-up investigation is needed. All test browsers mute only their output; actual Web Audio nodes/gains/loops still execute. Desktop sound settings are unchanged.
+The profiler sets 1800 × 1000/DPR1, seed38 and the normal 180-second/3-second-spawn options through the interface. `PROFILE_VULKAN=1` omits an unsupported screenshot on that native surface; the normal Chromium/Firefox journeys provide rendered evidence. `PROFILE_SOFTWARE=1` is a headless diagnostic and cannot reproduce the hardware claim. `PROFILE_WARMUP_AUDIT=1` extends the five resource cycles to ten when warm-up investigation is needed. All test browsers mute only their output; real Web Audio nodes, gains and loops still execute. Desktop sound settings remain unchanged.
 
-## P01:180 active seconds
+## P01: 180 active seconds
 
-| Parameter                                   | Actual observation                                                             |
-| ------------------------------------------- | ------------------------------------------------------------------------------ |
-| OS / CPU                                    | Linux6.17.0-29-generic / Intel Core i5-12600K                                  |
-| Browser                                     | Playwright Chromium151.0.7922.34                                               |
-| Actual GPU/backend                          | NVIDIA RTX4060Ti / WebGL2 / ANGLE Vulkan1.4.312                                |
-| Viewport / DPR                              | 1800 ×1000 /1                                                                  |
-| Build                                       | Clean optimized Vite, Node22.21.1, source above                                |
-| Config                                      | 180 active seconds; standard alternating3s spawns; full default combat balance |
-| Seed / ruleset                              | 38 / `v1:4d61de0eafc20fea87a43f4b9badc9343702c43e2f8f4f068b05cba67daa30fa`     |
-| Outcome                                     | Time up at180s;59points,70HP,59spawns; both roles                              |
-| Measured frames / raw interval sum          | 10,801 /180.0096s                                                              |
-| FPS                                         | **60.0024**                                                                    |
-| p95 / maximum raw interval                  | **17.40ms /19.60ms**                                                           |
-| Peak rendered ships / projectiles / effects | **2 /12 /6**                                                                   |
-| Peak audio voices                           | 14, at most two loops                                                          |
-| Pauses / reflows / page errors              | 0 /0 /0                                                                        |
+| Parameter                                   | Actual observation                                                                                                                             |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| OS / CPU                                    | Linux6.17.0-29-generic / Intel Core i5-12600K                                                                                                  |
+| Browser                                     | Playwright Chromium151.0.7922.34                                                                                                               |
+| Actual GPU/backend                          | NVIDIA RTX4060Ti / WebGL2 / ANGLE Vulkan1.4.312                                                                                                |
+| Viewport / DPR                              | 1800 × 1000 / 1                                                                                                                                |
+| Build                                       | Clean optimized Vite, Node22.21.1, source above                                                                                                |
+| Config                                      | Rules4 / archipelago-v4 / fixed160-unit outer corridor; 180 active seconds, standard alternating3s spawns and unchanged default combat balance |
+| Seed / ruleset                              | 38 / `v1:b29b040e2407e9659f89be12ffd5d7ef09e481f9005dffd00a87a631b68acf42`                                                                     |
+| Outcome                                     | Time up at180s; 58points, 100HP, 59spawns; both roles                                                                                          |
+| Measured frames / raw interval sum          | 10,801 / 180.0101s                                                                                                                             |
+| FPS                                         | **60.0022**                                                                                                                                    |
+| p95 / maximum raw interval                  | **17.40ms / 18.90ms**                                                                                                                          |
+| Peak rendered ships / projectiles / effects | **4 / 16 / 6**                                                                                                                                 |
+| Peak audio voices                           | 14, at most two loops                                                                                                                          |
+| Pauses / reflows / page errors              | 0 / 0 / 0                                                                                                                                      |
 
-The reproducible protocol selects an unobstructed approaching target, leads its shot and drives actual keyboard turns/front/left/right fire. It observes rules; it does not assign HP, score, positions or completion. Pure input qualification selected a seeded workload that can survive; this is not a worst-case benchmark. Diagnostic focus emulation keeps this hardware sample active; the headed tab-switch test verifies native pause separately. Loading/reflow startup precedes the active window. Raw frame intervals retain stalls, while the game's documented250ms contribution cap bounds simulation catch-up.
+The reproducible protocol selects an unobstructed approaching target, leads its shot from observed enemy velocity (including stationary attack states) and drives actual keyboard turns/front/left/right fire. It observes rules; it does not assign HP, score, positions or completion. Pure input qualification uses the same fitted outer-water bounds as the browser runtime. Selecting a surviving seeded workload does not make this a worst-case benchmark. Diagnostic focus emulation keeps the hardware sample active; a headed tab-switch test separately verifies native pause. Loading/reflow startup precedes the active window. Raw frame intervals retain stalls, while the game's documented250ms contribution cap bounds simulation catch-up.
 
-The complete dedicated P01/P02 execution passed2 cases with zero retries in3.8minutes. Combat ended by time rather than using an early-death prefix as a three-minute sample. Movement/shore/navigation/touch playtesting is separate from this stationary lead-aim workload.
+P01 completed the full180s active window. P02 passed all five comparable cycles in45.4s; the combined report includes both successful tests. Combat ended by time; no early-death prefix is presented as a three-minute sample. Movement, shore navigation and touch playtesting are separate from this stationary lead-aim workload.
 
-## P02:five comparable disposal cycles
+## P02: five comparable disposal cycles
 
-Each cycle uses the same document and8 active seconds of real W/front/broadside input, then Pause → Main Menu → Leave match. Reloading would hide retention and is not used. The diagnostic runtime reference is released before forced GC. Measurements include heap, DOM/listeners, exact native categories, representative strong-root paths and disposed-owner counters; full heap exports are discarded after aggregation.
+Each cycle uses the same document and8 active seconds of real W/front/broadside input, then Pause → Main Menu → Leave match. Reloading would hide retention and is not used. The diagnostic runtime reference is released, menu images/fonts are decoded and two actual presentation frames complete before forced GC. Measurements include heap, DOM/listeners, native categories, representative strong-root paths and disposed-owner counters; full heap exports are discarded after aggregation.
 
 | Cycle | Post-GC JS heap, bytes | DOM nodes | JS listeners | MessagePorts |
 | ----- | ---------------------: | --------: | -----------: | -----------: |
-| 1     |              7,562,312 |       107 |          188 |            3 |
-| 2     |              8,035,780 |       183 |          229 |            3 |
-| 3     |              8,126,608 |       107 |          188 |            3 |
-| 4     |              8,311,924 |       183 |          229 |            3 |
-| 5     |              8,392,976 |       107 |          188 |            3 |
+| 1     |              7,553,996 |       107 |          188 |            3 |
+| 2     |              7,958,540 |       107 |          188 |            3 |
+| 3     |              8,146,436 |       107 |          188 |            3 |
+| 4     |              8,263,132 |       107 |          188 |            3 |
+| 5     |              8,404,596 |       107 |          188 |            3 |
 
-Every sample ended with zero live/pending Applications, attached game canvas, owned input/browser listeners, observers, tickers, subscribers, scene objects, entities, effects and active audio/terminal voices. Unique runtime/scene objects were absent from every post-GC snapshot. Minified Application/ticker names collide with unrelated constructor names; those counts are marked ambiguous rather than treated as instance counts. Window listener counts stayed constant; the transient DOM/listener increase returned to its original counts and did not accumulate.
+Every sample ended with zero live/pending Applications, attached game canvas, owned input/browser listeners, observers, tickers, subscribers, scene objects, entities, effects and active audio/terminal voices. Unique Runtime/Scene objects were absent from every post-GC snapshot. Minified Application/ticker names collide with unrelated constructor names; those counts are explicitly ambiguous. All final samples had107 DOM nodes and188 JS listeners; window listener counts remained constant.
 
-Heap grew830,664bytes. Category comparison accounts for755,552bytes (**90.96%**) in compiled-code self size, plus22,192bytes of weak-array metadata,17,776bytes of strings,15,444bytes of object shapes and smaller browser/diagnostic structures. This supports compilation/diagnostic warm-up as the dominant observed growth, while not proving indefinitely flat memory. The native categories and retaining paths do not show discarded combat worlds remaining rooted.
+Heap grew850,600bytes. Compiled-code self size accounts for782,460bytes (**91.99%**) of that difference. Unique Runtime/Scene owners were absent after every disposal; MessagePorts stayed3/3/3/3/3. Compilation/diagnostic warm-up dominates the observed growth, but five cycles do not prove indefinitely flat memory. The native categories and retaining paths do not show discarded combat worlds remaining rooted.
 
-The live application intentionally keeps sixteen shared texture sources,14decoded-buffer keys and one suspended audio context. Canvas2D contexts stayed15 (including crop preparation/capability resources), WebGL wrappers stayed bounded (two WebGL1/one WebGL2), and browser-pending stopped audio sources varied12→11 rather than growing. Their application voice maps/connections were already empty; native browser pending activity is distinct from an active sound. The browser closes the final application owner after measurement. Heap self size is not total GPU memory.
+The application intentionally keeps sixteen shared texture sources, fourteen decoded-buffer keys and one suspended audio context for reuse. WebGL wrappers stayed bounded (two WebGL1/one WebGL2). Browser-pending stopped audio sources varied8→7 rather than growing; application voice maps and connections were already empty. Browser pending activity is distinct from an active sound. The browser closes the final application owner after measurement. Heap self size is not total GPU memory.
 
-The direct terrain groups meet the target in this declared workload without reinstating the Firefox-breaking scenery RenderTexture. No speculative pooling, culling, lowered DPR or altered combat balance was added. Shared atlas/buffer retention has a current reuse purpose; session resources have verified closure.
+Direct terrain groups met the60FPS target in this workload without reinstating the Firefox-breaking scenery RenderTexture. No speculative pooling, culling, lowered DPR or combat-balance change was added. Shared atlas/buffer retention has a current reuse purpose; session resources have verified closure.
 
 ## Evidence limits
 
-This is one hardware/browser/seed/configuration and five comparable cycles, not worst-case entities, physical-phone performance or infinite retention. Physical Android/iOS/tablet tests and subjective audible mix were not performed. Output mute, nodes, source WAV properties and bounded digital levels cannot establish perceived latency, masking or loop seams. Exact JSON/frame/resource/build manifests and HTML reports belong to the current [delivery evidence](acceptance.md).
+This is one hardware/browser/seed/configuration and five comparable cycles, not worst-case entities, physical-phone performance or infinite retention. Physical Android/iOS/tablet testing and subjective audible mix were not performed. Muted output, nodes, WAV properties and bounded digital levels cannot establish perceived latency, masking or loop seams. Exact JSON/frame/resource/build manifests and the combined HTML report belong to the current [delivery evidence](acceptance.md).
 
-The post-Options confirmation sample again completed180active seconds near60FPS. One resource sequence was3,3,4,3,3 MessagePorts, with zero rooted runtime/scene owners and bounded browser-pending paths. An initial exact-equality assertion misclassified that transient as accumulation; the corrected gate requires return to the post-warmup baseline and explicitly checks absence of rooted runtime/scene owners. The original51→91 stream leak would fail this gate. Final confirmation JSON/HTML/source identity is separate from this labelled diagnostic.
+Earlier diagnostic work found and repaired an observed-stream leak. The resource gate checks return to the post-warmup MessagePort baseline and absence of unique Runtime/Scene owners rather than requiring equality with a transient intermediate count. Useful labelled failure traces accompany the delivery; they do not replace current passing evidence.

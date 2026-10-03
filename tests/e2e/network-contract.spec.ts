@@ -204,4 +204,19 @@ test('G10 historical complete config keeps its original canonical fingerprint', 
   expect(canonical(decoded)).toBe(canonical(historical));
   expect(await rulesetId(decoded)).toBe(await rulesetId(historical));
   expect(await rulesetId(decoded)).not.toBe(await rulesetId(current));
+  const previousLevel = { ...current.level };
+  delete previousLevel.navigationPadding;
+  const previousArchipelago = {
+    ...current,
+    version: 3 as const,
+    level: { ...previousLevel, version: 'archipelago-v3' },
+  };
+  const previousDecoded = decodeConfig(
+    JSON.parse(JSON.stringify(previousArchipelago)),
+  );
+  expect(previousDecoded).toEqual(previousArchipelago);
+  expect(await rulesetId(previousDecoded)).toBe(
+    await rulesetId(previousArchipelago),
+  );
+  expect(await rulesetId(previousDecoded)).not.toBe(await rulesetId(current));
 });

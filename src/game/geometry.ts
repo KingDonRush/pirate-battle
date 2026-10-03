@@ -99,13 +99,14 @@ export function canOccupy(
 ) {
   const [a, b] = hullEnds(position, heading, config.hull.halfLength);
   const radius = config.hull.radius,
-    margin = radius + config.hull.boundaryMargin;
+    margin = radius + config.hull.boundaryMargin,
+    contactTolerance = 1e-7;
   for (const p of [a, b])
     if (
-      p.x < bounds.x + margin ||
-      p.y < bounds.y + margin ||
-      p.x > bounds.x + bounds.width - margin ||
-      p.y > bounds.y + bounds.height - margin
+      p.x < bounds.x + margin - contactTolerance ||
+      p.y < bounds.y + margin - contactTolerance ||
+      p.x > bounds.x + bounds.width - margin + contactTolerance ||
+      p.y > bounds.y + bounds.height - margin + contactTolerance
     )
       return false;
   for (const island of config.level.islands) {
@@ -130,6 +131,60 @@ export function canOccupy(
         if (pointSegmentDistance({ x, y }, a, b) < radius + r) return false;
   }
   return true;
+}
+
+export function containHull(
+  position: Point,
+  heading: number,
+  config: MatchConfig,
+  bounds: Rect,
+): Point {
+  const margin = config.hull.radius + config.hull.boundaryMargin;
+  const extentX = margin + Math.abs(Math.sin(heading)) * config.hull.halfLength;
+  const extentY = margin + Math.abs(Math.cos(heading)) * config.hull.halfLength;
+  return {
+    x: Math.max(
+      bounds.x + extentX,
+      Math.min(bounds.x + bounds.width - extentX, position.x),
+    ),
+    y: Math.max(
+      bounds.y + extentY,
+      Math.min(bounds.y + bounds.height - extentY, position.y),
+    ),
+  };
+}
+
+export function resolveHullRotation(
+  position: Point,
+  heading: number,
+  previousHeading: number,
+  config: MatchConfig,
+  bounds: Rect,
+): Point | null {
+  const contained = containHull(position, heading, config, bounds);
+  if (canOccupy(contained, heading, config, bounds)) return contained;
+  // Resolve only the footprint introduced by this angular step. A shoreline
+  // contact can push the hull outward, but cannot teleport it across an island.
+  const reach =
+    config.hull.halfLength *
+      Math.abs(angleDifference(heading, previousHeading)) +
+    1e-6;
+  for (let ring = 1; ring <= 4; ring++) {
+    for (let direction = 0; direction < 16; direction++) {
+      const angle = (direction * Math.PI) / 8;
+      const candidate = containHull(
+        {
+          x: position.x + (Math.cos(angle) * reach * ring) / 4,
+          y: position.y + (Math.sin(angle) * reach * ring) / 4,
+        },
+        heading,
+        config,
+        bounds,
+      );
+      if (canOccupy(candidate, heading, config, bounds)) return candidate;
+    }
+  }
+  return null;
 }
 
 export function castIsland(

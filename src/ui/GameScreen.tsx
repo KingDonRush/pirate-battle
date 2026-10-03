@@ -142,13 +142,16 @@ function Battle({
             </strong>
           </div>
         </div>
-        <div className="hud-counter" aria-label={'Score: ' + hud.score}>
+        <div
+          className="hud-counter hud-score"
+          aria-label={'Score: ' + hud.score}
+        >
           <img className="counter-icon" src={scoreIcon} alt="" />
           <span className="counter-label">Score</span>
           <strong>{hud.score}</strong>
         </div>
         <div
-          className="hud-counter"
+          className="hud-counter hud-time"
           aria-label={
             'Time remaining: ' + mins + ' minutes ' + secs + ' seconds'
           }

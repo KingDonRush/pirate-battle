@@ -27,6 +27,7 @@ export type LevelDefinition = Readonly<{
   height: number;
   version: string;
   boundsPolicy?: 'viewport';
+  navigationPadding?: number;
   islands: readonly Readonly<{
     x: number;
     y: number;
@@ -38,8 +39,9 @@ export type LevelDefinition = Readonly<{
 export const LEVEL: LevelDefinition = Object.freeze({
   width: 1152,
   height: 640,
-  version: 'archipelago-v3',
+  version: 'archipelago-v4',
   boundsPolicy: 'viewport',
+  navigationPadding: 160,
   islands: Object.freeze(
     [
       { x: 32, y: 24, width: 352, height: 288, radius: 56 },
@@ -63,7 +65,7 @@ export type EnemyConfig = Readonly<{
   range: number;
 }>;
 export type MatchConfig = Readonly<{
-  version: 1 | 2 | 3;
+  version: 1 | 2 | 3 | 4;
   level: LevelDefinition;
   duration: number;
   spawnInterval: number;
@@ -96,7 +98,7 @@ export type MatchConfig = Readonly<{
 
 export function createConfig(settings: Settings): MatchConfig {
   return Object.freeze({
-    version: 3,
+    version: 4,
     level: LEVEL,
     duration: settings.duration,
     spawnInterval: settings.spawnInterval,

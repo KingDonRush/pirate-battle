@@ -26,13 +26,13 @@ export function pilotInput(
       0,
       (distance(target, state.player) - 60) / config.weapons.front.speed,
     );
-    const speed =
-      target.activeAt > state.elapsed
-        ? 0
-        : config.enemies[target.kind === 'chaser' ? 'chaser' : 'shooter'].speed;
+    // Aim from observed motion, including Shooters stopped in attack range and
+    // a blocked route. A role's nominal speed is not its actual current velocity.
+    const vx = target.activeAt > state.elapsed ? 0 : target.velocity.x;
+    const vy = target.activeAt > state.elapsed ? 0 : target.velocity.y;
     const lead = {
-      x: target.x + Math.sin(target.heading) * speed * travel * 0.7,
-      y: target.y - Math.cos(target.heading) * speed * travel * 0.7,
+      x: target.x + vx * travel * 0.7,
+      y: target.y + vy * travel * 0.7,
     };
     const difference = angleDifference(
       Math.atan2(lead.x - state.player.x, -(lead.y - state.player.y)),
