@@ -21,14 +21,17 @@ export default defineConfig({
     deviceScaleFactor: 1,
     headless: process.env.PROFILE_SOFTWARE === '1',
     launchOptions: {
-      args:
-        process.env.PROFILE_VULKAN === '1'
+      // Silence only this test browser; Web Audio still exercises its real nodes.
+      args: [
+        '--mute-audio',
+        ...(process.env.PROFILE_VULKAN === '1'
           ? [
               '--use-angle=vulkan',
               '--enable-features=Vulkan',
               '--disable-vulkan-surface',
             ]
-          : [],
+          : []),
+      ],
     },
     baseURL,
     trace: 'off',

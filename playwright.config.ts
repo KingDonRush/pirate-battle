@@ -29,6 +29,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     serviceWorkers: 'allow',
+    launchOptions: { args: ['--mute-audio'] },
   },
   projects: [
     {
