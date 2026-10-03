@@ -8,10 +8,13 @@ import {
   hullsTouch,
   segmentRect,
   type Point,
+  type Rect,
 } from './geometry';
 import { directPath, findPath } from './navigation';
 export type InputSnapshot = Readonly<{
   forward: boolean;
+  throttle?: number;
+  heading?: number;
   turn: number;
   front: boolean;
   left: boolean;
@@ -46,6 +49,7 @@ export type Projectile = Point & {
   damage: number;
   radius: number;
   expiresAt: number;
+  bornAt: number;
 };
 export type CombatEvent = Point & {
   kind:
@@ -70,6 +74,16 @@ export type MatchSession = Readonly<{
 export const STEP = 1 / 60;
 export class Simulation {
   readonly player: Ship;
+  private arena: Rect;
+  setArenaBounds(bounds: Rect) {
+    if (this.endReason || this.session.config.level.boundsPolicy !== 'viewport')
+      return;
+    this.arena = { ...bounds };
+    for (const enemy of this.enemies.values()) {
+      enemy.path = [];
+      enemy.navigateAt = this.elapsed;
+    }
+  }
   readonly session: MatchSession;
   readonly enemies = new Map<number, Ship>();
   readonly projectiles = new Map<number, Projectile>();
@@ -86,6 +100,12 @@ export class Simulation {
   private rng: number;
   constructor(session: MatchSession) {
     this.session = session;
+    this.arena = {
+      x: 0,
+      y: 0,
+      width: session.config.level.width,
+      height: session.config.level.height,
+    };
     this.rng = session.seed >>> 0;
     this.nextSpawn = session.config.spawnInterval;
     const start = session.config.player.start ?? { x: 480, y: 520, heading: 0 };
@@ -144,8 +164,24 @@ export class Simulation {
     const config = this.session.config;
     this.move(
       this.player,
-      input.turn,
-      input.forward ? config.player.speed : 0,
+      input.heading === undefined
+        ? input.turn
+        : Math.max(
+            -1,
+            Math.min(
+              1,
+              angleDifference(input.heading, this.player.heading) /
+                (config.player.turnSpeed * STEP),
+            ),
+          ),
+      (input.throttle ?? (input.forward ? 1 : 0)) *
+        config.player.speed *
+        (input.heading === undefined
+          ? 1
+          : Math.max(
+              0,
+              Math.cos(angleDifference(input.heading, this.player.heading)),
+            )),
       config.player.turnSpeed,
     );
     for (const weapon of ['front', 'left', 'right'] as const)
@@ -161,7 +197,7 @@ export class Simulation {
       let target: Point = this.player;
       if (!directPath(enemy, this.player, config)) {
         if (this.elapsed >= enemy.navigateAt) {
-          enemy.path = findPath(enemy, this.player, config);
+          enemy.path = findPath(enemy, this.player, config, this.arena);
           enemy.navigateAt = this.elapsed + 0.5 + (enemy.id % 5) * 0.05;
         }
         while (
@@ -242,10 +278,11 @@ export class Simulation {
     ship.previous.y = ship.y;
     ship.previousHeading = ship.heading;
     const heading = ship.heading + turn * turnSpeed * STEP;
-    if (canOccupy(ship, heading, this.session.config)) ship.heading = heading;
+    if (canOccupy(ship, heading, this.session.config, this.arena))
+      ship.heading = heading;
     const x = ship.x + Math.sin(ship.heading) * speed * STEP,
       y = ship.y - Math.cos(ship.heading) * speed * STEP;
-    if (canOccupy({ x, y }, ship.heading, this.session.config)) {
+    if (canOccupy({ x, y }, ship.heading, this.session.config, this.arena)) {
       ship.x = x;
       ship.y = y;
     }
@@ -257,12 +294,12 @@ export class Simulation {
           this.spawnIndex % config.spawn.distribution.length
         ] ?? 'chaser';
     for (let attempt = 0; attempt < 32; attempt++) {
-      const x = 100 + this.random() * (config.level.width - 200),
-        y = 100 + this.random() * (config.level.height - 200);
+      const x = this.arena.x + 100 + this.random() * (this.arena.width - 200),
+        y = this.arena.y + 100 + this.random() * (this.arena.height - 200);
       const heading = Math.atan2(this.player.x - x, -(this.player.y - y));
       if (
         distance({ x, y }, this.player) < config.spawn.minimumDistance ||
-        !canOccupy({ x, y }, heading, config) ||
+        !canOccupy({ x, y }, heading, config, this.arena) ||
         [...this.enemies.values()].some(
           (enemy) => distance({ x, y }, enemy) < 110,
         )
@@ -311,6 +348,7 @@ export class Simulation {
         owner: ship.kind === 'player' ? 'player' : 'enemy',
         damage: weapon.damage,
         radius: weapon.radius,
+        bornAt: this.elapsed,
         expiresAt: this.elapsed + weapon.lifetime,
       };
       // A muzzle crossing a coast cannot fire through the obstacle.
@@ -392,15 +430,7 @@ export class Simulation {
       projectile.previous.y = projectile.y;
       projectile.x = end.x;
       projectile.y = end.y;
-      if (
-        remaining < STEP - 1e-9 ||
-        segmentRect(end, end, {
-          x: 0,
-          y: 0,
-          width: config.level.width,
-          height: config.level.height,
-        }) === null
-      )
+      if (remaining < STEP - 1e-9 || segmentRect(end, end, this.arena) === null)
         this.projectiles.delete(projectile.id);
     }
   }
@@ -434,6 +464,7 @@ export class Simulation {
   observe() {
     return {
       matchId: this.session.id,
+      arenaBounds: { ...this.arena },
       elapsed: this.elapsed,
       score: this.score,
       endReason: this.endReason,

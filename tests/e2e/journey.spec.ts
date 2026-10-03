@@ -1,4 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
+// These cases inject actual asset/module/transport failures with context routing.
+// A controlling worker can bypass Firefox's interception; data tests keep it enabled.
+test.use({ serviceWorkers: 'block' });
 
 async function start(page: Page, duration = 120, controlled = false) {
   if (controlled) {
@@ -275,4 +278,38 @@ test('G02 lazy battle module failure has a recovery boundary', async ({
     .poll(() => page.evaluate(() => window.pirateBattle?.observe().hud.state))
     .toBe('running');
   await expect(page.locator('canvas')).toHaveCount(1);
+});
+
+test('G02 an unavailable demo module preserves local menu, Options and combat', async ({
+  page,
+  context,
+}) => {
+  await context.route(
+    (url) =>
+      /\/(?:assets\/browser-[^/]+\.js|src\/mocks\/browser\.ts)$/.test(
+        url.pathname,
+      ),
+    (route) => route.abort(),
+  );
+  await page.goto('/?seed=42&clock=manual');
+  await expect(
+    page.getByRole('button', { name: 'Play', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Options', exact: true }).click();
+  await expect(
+    page.getByLabel('Game session time', { exact: true }),
+  ).toHaveValue('120');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Play as guest', exact: true })
+    .click();
+  await expect
+    .poll(() => page.evaluate(() => window.pirateBattle?.observe().hud.state))
+    .toBe('running');
+  await page.keyboard.down('w');
+  await page.evaluate(() => window.pirateBattle?.advance(100));
+  await page.keyboard.up('w');
+  expect(
+    await page.evaluate(() => window.pirateBattle?.observe().elapsed),
+  ).toBeGreaterThan(0);
 });

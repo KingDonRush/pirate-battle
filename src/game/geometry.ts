@@ -90,16 +90,22 @@ export function canOccupy(
   position: Point,
   heading: number,
   config: MatchConfig,
+  bounds: Rect = {
+    x: 0,
+    y: 0,
+    width: config.level.width,
+    height: config.level.height,
+  },
 ) {
   const [a, b] = hullEnds(position, heading, config.hull.halfLength);
   const radius = config.hull.radius,
     margin = radius + config.hull.boundaryMargin;
   for (const p of [a, b])
     if (
-      p.x < margin ||
-      p.y < margin ||
-      p.x > config.level.width - margin ||
-      p.y > config.level.height - margin
+      p.x < bounds.x + margin ||
+      p.y < bounds.y + margin ||
+      p.x > bounds.x + bounds.width - margin ||
+      p.y > bounds.y + bounds.height - margin
     )
       return false;
   for (const island of config.level.islands) {

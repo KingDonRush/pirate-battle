@@ -1,13 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { decodeRecord } from '../../src/data/contracts';
+import { selectNetwork as condition, openDemoNetwork } from '../support/menu';
 // Keep DOM/API/network failure evidence without recording every accelerated
 // combat frame; those captures compete with software rendering in CI.
 test.use({ trace: { mode: 'retain-on-failure', screenshots: false } });
-async function condition(page: Page, value: string) {
-  if (!(await page.getByLabel('Scenario', { exact: true }).isVisible()))
-    await page.getByText('Network conditions', { exact: true }).click();
-  await page.getByLabel('Scenario', { exact: true }).selectOption(value);
-}
 async function completed(page: Page) {
   await page.getByLabel('Display name').fill('Coral Captain');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
@@ -15,7 +11,7 @@ async function completed(page: Page) {
     .poll(() => page.evaluate(() => window.pirateBattle?.observe().hud.state))
     .toBe('running');
   const id = await page.evaluate(() => window.pirateBattle?.observe().matchId);
-  await page.evaluate(() => window.pirateBattle?.advance(40000));
+  await page.evaluate(() => window.pirateBattle?.advance(120000));
   await expect(
     page.getByRole('heading', { name: 'Defeated', exact: true }),
   ).toBeVisible();
@@ -60,14 +56,14 @@ test('G10 ranking pagination, empty/failure/background states and keyboard tabs'
   await expect(page.getByRole('tabpanel')).toContainText(
     'No battles with these rules',
   );
-  await page.getByLabel('Scenario', { exact: true }).selectOption('http-400');
+  await condition(page, 'http-400');
   await expect(page.getByRole('tabpanel').getByRole('alert')).toBeVisible();
   await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
   await expect(
     page.getByRole('button', { name: 'Play', exact: true }),
   ).toBeEnabled();
   await page.getByRole('tab', { name: 'Ranking', exact: true }).click();
-  await page.getByLabel('Scenario', { exact: true }).selectOption('slow');
+  await condition(page, 'slow');
   await expect(page.getByRole('tabpanel').getByRole('status')).toContainText(
     /Updating|Loading/,
   );
@@ -176,21 +172,23 @@ test('G10 separate tab failures and reproducible multi-page history reset', asyn
   await expect(page.getByRole('tabpanel')).toContainText('Page 1 of 4');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByRole('tabpanel')).toContainText('Page 2 of 4');
-  await page
-    .getByLabel('Scenario', { exact: true })
-    .selectOption('ranking-failure');
+  await condition(page, 'ranking-failure');
   await page.getByRole('tab', { name: 'Ranking', exact: true }).click();
   await expect(page.getByRole('tabpanel').getByRole('alert')).toBeVisible({
     timeout: 10000,
   });
   await page.getByRole('tab', { name: 'Match History', exact: true }).click();
   await expect(page.getByRole('tabpanel')).toContainText('Coral Captain');
+  await openDemoNetwork(page);
   await page
     .getByRole('button', { name: 'Reset demo data', exact: true })
     .click();
   await page
     .getByRole('button', { name: 'Reset matches', exact: true })
     .click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('tab', { name: 'Match History', exact: true }).click();
   await expect(page.getByRole('tabpanel')).toContainText(
     'No completed battles',
   );
@@ -247,7 +245,7 @@ test('G10 scoped reset removes pending data before automatic Success recovery', 
     .poll(async () => (await database(page, 'outbox')).length)
     .toBe(1);
   await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
-  await condition(page, 'end-unavailable');
+  await openDemoNetwork(page);
   await page
     .getByRole('button', { name: 'Reset demo data', exact: true })
     .click();
@@ -255,9 +253,10 @@ test('G10 scoped reset removes pending data before automatic Success recovery', 
     .getByRole('button', { name: 'Reset matches', exact: true })
     .click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByLabel('Scenario', { exact: true })).toHaveValue(
-    'success',
-  );
+  await expect(
+    page.getByRole('radio', { name: 'Success', exact: true }),
+  ).toBeChecked();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(
     page.getByRole('button', { name: 'Last result', exact: true }),
   ).toHaveCount(0);

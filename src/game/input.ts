@@ -14,6 +14,16 @@ const KEYS: Record<string, Action> = {
 };
 export class InputController {
   private sources = new Map<string, readonly Action[]>();
+  private analog = new Map<
+    string,
+    { throttle: number; turn: number; heading?: number }
+  >();
+  steer(
+    id: string,
+    value: { throttle: number; turn: number; heading?: number },
+  ) {
+    if (this.enabled) this.analog.set(id, value);
+  }
   private enabled = false;
   private disposed = false;
   private pause: () => void;
@@ -59,23 +69,39 @@ export class InputController {
   }
   release(id: string) {
     this.sources.delete(id);
+    this.analog.delete(id);
   }
   clear() {
     this.sources.clear();
+    this.analog.clear();
   }
   snapshot(): InputSnapshot {
     if (!this.enabled) return EMPTY_INPUT;
     const active = new Set([...this.sources.values()].flat());
+    const analogue = [...this.analog.values()][0];
+    const digitalTurn =
+      Number(active.has('turnRight')) - Number(active.has('turnLeft'));
+    const throttle = Math.max(
+      Number(active.has('forward')),
+      analogue?.throttle ?? 0,
+    );
     return {
-      forward: active.has('forward'),
-      turn: Number(active.has('turnRight')) - Number(active.has('turnLeft')),
+      forward: throttle > 0,
+      throttle,
+      ...(digitalTurn === 0 && analogue?.heading !== undefined
+        ? { heading: analogue.heading }
+        : {}),
+      turn: Math.max(-1, Math.min(1, digitalTurn + (analogue?.turn ?? 0))),
       front: active.has('front'),
       left: active.has('left'),
       right: active.has('right'),
     };
   }
   observe() {
-    return { listeners: this.disposed ? 0 : 2, sources: this.sources.size };
+    return {
+      listeners: this.disposed ? 0 : 2,
+      sources: this.sources.size + this.analog.size,
+    };
   }
   dispose() {
     this.disposed = true;

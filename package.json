@@ -18,7 +18,7 @@
     "test:e2e": "playwright test",
     "test:e2e:dev": "E2E_SERVER=dev playwright test",
     "test:e2e:report": "playwright show-report artifacts/playwright/report",
-    "browser:install": "PLAYWRIGHT_SKIP_BROWSER_GC=1 playwright install chromium",
+    "browser:install": "PLAYWRIGHT_SKIP_BROWSER_GC=1 playwright install chromium firefox",
     "check": "npm run check:structure && npm run lint && npm run typecheck && npm run format:check && npm run build && npm run test:e2e",
     "check:structure": "node --test scripts/check-structure.test.mjs && node scripts/check-structure.mjs",
     "profile": "playwright test --config playwright.profile.config.ts"

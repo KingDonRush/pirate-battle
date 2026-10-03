@@ -1,19 +1,33 @@
-# Reference presentation review
+# Presentation and rendered review
 
-> **Read contract:** revision-bound presentation evidence, not task state or authorization. Recover intent through the [index](../.agents/index.md) and preserve the [company brief](../CHALLENGE.md).
+> **Read contract:** source-bound visual evidence, not task state or authorization. The [company brief](../CHALLENGE.md) remains unchanged. Acceptance belongs to the current revision and the observed rendering.
 
-The user's added acceptance is fidelity to the supplied complete-game composition/elements at **1800×1000**, retaining actual combat values/positions and approved name/guest, persistence/retry and responsive features. The supplied captures are static references, with no original animation timeline to compare.
+The user approved fidelity to the supplied artwork, finish and game-menu language with real match data, integrated name/guest/help/recovery and the newly chosen four-island composition. The static references do not supply an original animation timeline. They cannot establish literal equality of every dynamic frame or the original unidentified typeface.
 
-The current implementation uses the original title, nine-slice menu panel, action/control images, health/counter frames, logo, ship families, fort pieces, vegetation, rocks and water sheet. HTML implements interactive menus/records; Pixi independently renders the live world. The illustrated scene background belongs only to menus/results. No reference screenshot serves as a clickable game interface or a fabricated combat state.
+## Corrected composition
 
-Native reference review captures menu, Options, Ranking, Match History, arena, pause and result. The canonical 1152×640 geometry reflects the clipped top/bottom coast composition; its uniform portrait transform preserves actual rules/distances. Shore masks follow physical rounded geometry. Grass is inset from the union, with merged scanline masks and mirrored original texture cells to prevent stretched interiors/seams. Palette fitting used clear source-image regions; it is a color/composition comparison, not a claim that dynamic pixels equal the reference's illustrative score or actors.
+Home contains its title, captain field/error, Play/guest, Options, help and records within the wood frame. Options has five visible semantic tabs and a draft shared between them. Help is an illustrated internal page; Demo Network is a settings tab. Scroll belongs to the panel, while the actual available viewport owns its shell. Viewport-only captures and element bounds check this separately from appearance.
 
-Reviewed changes corrected panel-border coordinate offsets, transparent button backgrounds, misplaced mobile menu content, wrong coast density/decoration placement, hidden logo stacking, health fill over a pause dialog, indicator clearance and MM:SS formatting. The added identity/service controls have controlled dark backgrounds. Keyboard focus, form errors, long names, dialog return, real touch targets and recovery remain functional.
+The supplied retina menu panel uses physical slices80/64 for logical borders40/32; buttons retain their corners through nine slices, with themed focus/pressed/hover states. Hover never replaces Pause's illustrated background. Nunito is self-hosted under the supplied OFL; primary/secondary art, title, counters, gauges, cannon icons and logo retain their supplied provenance.
 
-Versioned menu/arena/result PNG baselines live in `tests/e2e/visual`. Desktop captures use DPR1; portrait/landscape run in desktop and emulated phone contexts. The redundant desktop-sized phone capture is excluded; the separate functional matrix still checks all ten sizes at DPR1/2/3. Each baseline uses a fixed date, name and seed, actual six-second rules/rendering for the arena and an actual completed/registered result. No HP, score, position or end flag is assigned. Baselines are reviewed artifacts, not an instruction to manufacture matching outcomes.
+The arena's ocean fills the viewport beneath upright HUD and touch controls. The four island contours, shallow water and foam use the same canonical geometry and one uniformly scaled/rotated group. A64-unit fort uses the horizontal gate, aligned connectors and centred tower faces drawn above wall joins. Isolated terrain sources have two-pixel extrusion gutters; nine-slice island art replaces adjacent mirrored crops and stair-stepped grass masks. No all-scenery masked RenderTexture is required.
 
-Nunito is self-hosted under the supplied OFL. The reference captures do not identify their original typeface, so exact font provenance or original animation-frame equality is not claimed. Emulated Chromium is not a physical mobile-device test. Final revision-linked HTML/traces/profiling/public-delivery evidence belongs in [acceptance](acceptance.md).
+## Damage and feedback qualification
 
-The measured static-terrain texture cache changed only coast edge sampling in the reviewed comparison (39 differing desktop pixels), while preserving composition and real world state. The regenerated arena baselines were reviewed; the tolerance was not widened to conceal the change. Cache texture ownership and context restoration are covered by lifecycle checks.
+| Role          | Healthy | Damaged | Very damaged |
+| ------------- | ------- | ------- | ------------ |
+| Pirate player | ship_2  | ship_8  | ship_14      |
+| Green Chaser  | ship_4  | ship_10 | ship_16      |
+| Blue Shooter  | ship_5  | ship_11 | ship_17      |
 
-Final control legends use14px text in desktop/tablet/portrait, with a solid eight-direction dark halo to keep the changing water/grass behind them from obscuring the letters. The specified text/halo pair has11.98:1 contrast. Short keyboard labels keep their intentional two-line shape inside the existing grid; an initial font-only update wrapped into extra rows and the viewport test detected overflow. Line-height/nowrap/min-width correction passed all ten sizes at DPR1/2/3, preserving48px targets. Three affected arena baselines were inspected and accepted without widening tolerance; menu/result and landscape references were unchanged. The outline follows [W3C contrast techniqueG18](https://www.w3.org/WAI/WCAG21/Techniques/general/G18), while actual rendered fit/readability remains separately reviewed.
+The proposed13 healthy Shooter was rejected after inspecting the actual PNG/XML:13 has a white sail. In the supplied66 ×113 frames, the selected sail region contains blue pixels1449→1440→1320 for5/11/17, and green pixels1525→1516→1378 for4/10/16. This is asset qualification, not fabricated combat HP. Browser checks separately drive real attacks and compare the surviving ship's texture to actual health, including a low-health pirate before defeat.
+
+White tapered projectile trails, water rings, warm hits and bounded450 ms explosions distinguish actions. Ending keeps the immutable battle frozen while an owned presentation progresses to the result; registration begins before that presentation ends. Reduced motion preserves the meaning through short fades.
+
+## Review boundary
+
+Rendered probes verify real water and island pixels in Chromium/Firefox after load/resize/reload, with actual WebGL restoration checked separately. Native Chromium touch tests exercise floating direction, rudder/no-reverse, mirroring, cancellation and rigid orientation through either direction/inversion. Desktop/portrait/landscape menu, arena and real result baselines require inspection before replacement; a changed baseline is not evidence of correct design by itself.
+
+The final captures/reports and their exact source identity are linked in [acceptance](acceptance.md). Physical Android/iOS/tablet checks and subjective audible mix review remain separately stated limits; emulation, metadata, colour counts and audio-node states cannot establish them.
+
+The corrected24 baselines (nine Chromium desktop, six Chromium touch, nine Firefox) and1800 ×1000 captures were inspected at normal scale. Review checked contained fields/actions, correct blue/green sail identity, four complete coasts/fort connectors, portrait/full-water layout and real result text. This review also found and repaired a stretched decorative menu ship and an auto-height pause dialog; neither was accepted as a baseline. The short-landscape review also kept HUD anchoring at the top (a shorthand inset initially centred it vertically) and separated the name label from its focus outline. Tolerances were not widened.

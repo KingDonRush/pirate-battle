@@ -1,8 +1,10 @@
-# Optimized combat and resource profiling
+# Historical reference-v2 profiling — corrected measurement required
 
 > **Read contract:** measured solution evidence, not task tracking or authorization. Recover context through the [.agents index](../.agents/index.md) and preserve the [company brief](../CHALLENGE.md). The source, environment and finite observation window below bound every claim.
 
-The final real-time and retention profile ran on clean source `3bc40a3e7baef037b1715ebe5355859ed869d87c` (tree `cfe466131a3368abfefcf972f64e486bac965873`). It includes the measured browser mock-stream cleanup. The public evidence package includes exact build/asset manifests so later documentation/test-only integration can establish unchanged runtime bytes. JSON reports and the profiling HTML report accompany [acceptance](acceptance.md).
+These numbers describe the superseded cached reference-v2 renderer. They do not verify archipelago-v3, the direct terrain groups, floating controls or terminal presentation. Current P01/P02 must replace this report before corrected delivery.
+
+The historical real-time and retention profile ran on clean source `3bc40a3e7baef037b1715ebe5355859ed869d87c` (tree `cfe466131a3368abfefcf972f64e486bac965873`). It includes the measured browser mock-stream cleanup. The public evidence package includes exact build/asset manifests so later documentation/test-only integration can establish unchanged runtime bytes. JSON reports and the profiling HTML report accompany [acceptance](acceptance.md).
 
 ## Reproduce
 

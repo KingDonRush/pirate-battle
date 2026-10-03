@@ -1,10 +1,9 @@
 import {
   Container,
   Graphics,
+  NineSliceSprite,
   Sprite,
   TilingSprite,
-  Rectangle,
-  type Renderer,
   type Texture,
 } from 'pixi.js';
 import type { GameAssets } from './assets';
@@ -17,23 +16,29 @@ type ShipView = {
   fill: Sprite;
   mask: Graphics;
   health: number;
+  name: string;
   flashUntil: number;
 };
 type Effect = {
-  sprite: Sprite;
+  sprite: Sprite | Graphics;
   born: number;
   duration: number;
   kind: CombatEvent['kind'];
 };
+export const SHIP_FAMILIES = Object.freeze({
+  player: ['ship_2.png', 'ship_8.png', 'ship_14.png'],
+  chaser: ['ship_4.png', 'ship_10.png', 'ship_16.png'],
+  shooter: ['ship_5.png', 'ship_11.png', 'ship_17.png'],
+} as const);
 export class BattleScene {
   setReducedMotion(value: boolean) {
     this.reduced = value;
   }
   readonly world = new Container();
   readonly overlays = new Container();
+  readonly ocean: TilingSprite;
+  private trails = new Graphics();
   private background = new Container();
-  private backgroundTexture: Texture | null = null;
-  private backgroundSprite: Sprite | null = null;
   private ships = new Map<number, ShipView>();
   private balls = new Map<number, Sprite>();
   private effects: Effect[] = [];
@@ -42,151 +47,134 @@ export class BattleScene {
   constructor(session: MatchSession, assets: GameAssets, reduced: boolean) {
     this.assets = assets;
     this.reduced = reduced;
-    const water = new TilingSprite({
+    this.ocean = new TilingSprite({
       texture: assets.water,
-      width: session.config.level.width,
-      height: session.config.level.height,
+      width: 1,
+      height: 1,
     });
-    water.tileScale.set(2.4);
-    water.tint = 0xcfeff4;
-    this.background.addChild(water);
-    this.world.addChild(this.background);
-    const worldClip = new Graphics()
-      .rect(0, 0, session.config.level.width, session.config.level.height)
-      .fill(0xffffff);
-    this.background.addChild(worldClip);
-    this.background.mask = worldClip;
-    // Both shores and their masks share the collision geometry. Interior art
-    // repeats at a uniform scale instead of stretching the painted texture.
-    for (const [texture, inset, tint] of [
-      [assets.sand, 0, 0xdbdbdc],
-      [assets.grass, 64, 0xa7c4e2],
-    ] as const) {
-      const ground = new Container();
-      const tileWidth = texture.width * 1.2,
-        tileHeight = texture.height * 1.2;
-      // Mirrored adjacent cells share edge pixels, avoiding visible atlas seams.
-      for (let row = 0; row * tileHeight < session.config.level.height; row++) {
-        for (let col = 0; col * tileWidth < session.config.level.width; col++) {
-          const tile = new Sprite(texture);
-          tile.scale.set(col % 2 ? -1.2 : 1.2, row % 2 ? -1.2 : 1.2);
-          tile.position.set(
-            (col + (col % 2)) * tileWidth,
-            (row + (row % 2)) * tileHeight,
-          );
-          tile.tint = tint;
-          ground.addChild(tile);
-        }
-      }
-      const mask = new Graphics();
-      if (inset === 0) {
-        for (const island of session.config.level.islands)
-          mask
-            .roundRect(
-              island.x,
-              island.y,
-              island.width,
-              island.height,
-              island.radius,
-            )
-            .fill(0xffffff);
-      } else {
-        // Erode the union rather than each region: connected shores have no
-        // artificial beach strip at an internal join. Merge rows into spans.
-        const inside = (x: number, y: number) =>
-          session.config.level.islands.some((island) => {
-            const cx = Math.max(
-              island.x + island.radius,
-              Math.min(island.x + island.width - island.radius, x),
-            );
-            const cy = Math.max(
-              island.y + island.radius,
-              Math.min(island.y + island.height - island.radius, y),
-            );
-            return (x - cx) ** 2 + (y - cy) ** 2 <= island.radius ** 2;
-          });
-        const offsets = Array.from({ length: 64 }, (_, i) => ({
-          x: Math.cos((i * Math.PI) / 32) * inset,
-          y: Math.sin((i * Math.PI) / 32) * inset,
-        }));
-        const green = (x: number, y: number) =>
-          inside(x, y) &&
-          offsets.every((offset) => inside(x + offset.x, y + offset.y));
-        for (let y = 0; y < session.config.level.height; y += 4) {
-          let start: number | null = null;
-          for (let x = 0; x <= session.config.level.width; x += 4) {
-            const present =
-              x < session.config.level.width && green(x + 2, y + 2);
-            if (present && start === null) start = x;
-            if (!present && start !== null) {
-              mask.rect(start, y, x - start, 4).fill(0xffffff);
-              start = null;
-            }
-          }
-        }
-      }
-      this.background.addChild(ground, mask);
-      ground.mask = mask;
+    this.ocean.tint = 0xcfeff4;
+    this.world.addChild(this.background, this.trails);
+    for (const island of session.config.level.islands) {
+      const shore = new Graphics()
+        .roundRect(
+          island.x - 18,
+          island.y - 18,
+          island.width + 36,
+          island.height + 36,
+          island.radius + 18,
+        )
+        .fill({ color: 0x9aefea, alpha: 0.4 });
+      const foam = new Graphics()
+        .roundRect(
+          island.x - 5,
+          island.y - 5,
+          island.width + 10,
+          island.height + 10,
+          island.radius + 5,
+        )
+        .fill({ color: 0xecffed, alpha: 0.7 });
+      this.background.addChild(shore, foam);
+      // Preserve the supplied coast corners; extend only the centre and edges.
+      // Repeating arbitrary atlas crops introduces visible sand/grass blocks.
+      const ground = new NineSliceSprite({
+        texture: assets.island,
+        leftWidth: 64,
+        rightWidth: 64,
+        topHeight: 64,
+        bottomHeight: 64,
+        width: island.width,
+        height: island.height,
+      });
+      ground.position.set(island.x, island.y);
+      const coast = new Graphics()
+        .roundRect(
+          island.x,
+          island.y,
+          island.width,
+          island.height,
+          island.radius,
+        )
+        .fill(0xffffff);
+      ground.mask = coast;
+      this.background.addChild(ground, coast);
     }
-    if (session.config.level.version === 'reference-v2') {
-      const decoration = (name: string, x: number, y: number, size = 64) => {
-        const texture = assets.terrain.get(name);
-        if (!texture) return;
-        const sprite = new Sprite(texture);
-        sprite.position.set(x, y);
-        sprite.width = size;
-        sprite.height = size;
-        this.background.addChild(sprite);
-      };
-      for (const x of [56, 120, 184]) decoration('horizontal', x, 8);
-      decoration('horizontal-cannon', 128, 8);
-      for (const y of [32, 80]) decoration('vertical', 216, y);
-      for (const x of [240, 304, 368]) decoration('horizontal', x, 80);
-      decoration('gate', 292, 80);
-      decoration('vertical', 384, -56);
-      decoration('vertical-cannon', 384, 8);
-      decoration('vertical', 384, 72);
-      for (const [x, y] of [
-        [48, 0],
-        [208, 0],
-        [208, 80],
-        [368, 80],
-      ])
-        decoration('tower', x ?? 0, y ?? 0, 72);
-      decoration('palm', 128, 156, 88);
-      decoration('small-palm', 216, 252, 72);
-      decoration('leaves', 448, 8, 80);
-      decoration('small-palm', 936, 476, 64);
-      decoration('palm', 924, 560, 88);
-      decoration('moss-rock', 368, 164, 76);
-      decoration('moss-stone', 768, 568, 88);
-      decoration('rock', -8, 8, 72);
-    }
-  }
-  prepareBackground(renderer: Renderer, width: number, height: number) {
-    // Measured static shore masks/tile draws are flattened once per renderer.
-    // This texture belongs to the session; source atlas textures stay shared.
-    const cached = renderer.generateTexture({
-      target: this.background,
-      frame: new Rectangle(0, 0, width, height),
-      resolution: 2,
-    });
-    this.backgroundSprite?.destroy();
-    this.backgroundTexture?.destroy(true);
-    this.backgroundTexture = cached;
-    this.background.removeFromParent();
-    this.backgroundSprite = new Sprite(cached);
-    this.world.addChildAt(this.backgroundSprite, 0);
+    const decoration = (
+      name: string,
+      x: number,
+      y: number,
+      size = 64,
+      angle = 0,
+    ) => {
+      const texture = assets.terrain.get(name);
+      if (!texture) throw new Error('Missing terrain texture: ' + name);
+      const sprite = new Sprite(texture);
+      sprite.anchor.set(0.5);
+      sprite.position.set(x + size / 2, y + size / 2);
+      sprite.width = size;
+      sprite.height = size;
+      sprite.rotation = angle;
+      this.background.addChild(sprite);
+    };
+    // 64-unit connectors; tower faces are drawn last over aligned wall joins.
+    for (const y of [64, 192])
+      for (const x of [112, 176, 240])
+        decoration(
+          y === 192 && x === 176 ? 'gate-horizontal' : 'horizontal',
+          x,
+          y,
+        );
+    for (const x of [80, 272])
+      for (const y of [96, 160])
+        decoration(
+          x === 272 && y === 96 ? 'vertical-cannon' : 'vertical',
+          x,
+          y,
+        );
+    for (const [x, y] of [
+      [80, 64],
+      [272, 64],
+      [80, 192],
+      [272, 192],
+    ])
+      decoration('tower', x!, y!);
+    for (const [x, y, size] of [
+      [40, 200, 72],
+      [310, 245, 56],
+      [912, 70, 76],
+      [982, 130, 48],
+      [178, 526, 64],
+      [260, 540, 52],
+      [850, 466, 88],
+      [1000, 495, 64],
+    ])
+      decoration('palm', x!, y!, size);
+    for (const [x, y, size] of [
+      [915, 135, 48],
+      [190, 510, 40],
+      [965, 440, 64],
+      [1060, 530, 44],
+    ])
+      decoration('moss-rock', x!, y!, size);
   }
   private texture(name: string): Texture {
     const texture = this.assets.ships.get(name);
     if (!texture) throw new Error('Missing ship texture: ' + name);
     return texture;
   }
-  update(simulation: Simulation, view: ViewTransform, alpha: number) {
-    const time = simulation.elapsed;
+  update(
+    simulation: Simulation,
+    view: ViewTransform,
+    alpha: number,
+    endingElapsed = 0,
+  ) {
+    const time = simulation.elapsed + endingElapsed;
     const current = [simulation.player, ...simulation.enemies.values()];
     const alive = new Set(current.map((ship) => ship.id));
+    this.ocean.width = view.width;
+    this.ocean.height = view.height;
+    this.ocean.tileScale.set(2.4 * view.scale);
+    this.ocean.tileRotation = view.angle;
+    this.trails.clear();
     for (const [id, visual] of this.ships)
       if (!alive.has(id)) {
         visual.sprite.destroy();
@@ -194,6 +182,10 @@ export class BattleScene {
         this.ships.delete(id);
       }
     for (const ship of current) this.ship(ship, view, time, alpha);
+    if (simulation.endReason === 'death') {
+      const player = this.ships.get(simulation.player.id);
+      if (player) player.sprite.alpha = Math.max(0, 1 - endingElapsed / 0.45);
+    }
     for (const [id, visual] of this.balls)
       if (!simulation.projectiles.has(id)) {
         visual.destroy();
@@ -212,6 +204,26 @@ export class BattleScene {
         ball.previous.x + (ball.x - ball.previous.x) * alpha,
         ball.previous.y + (ball.y - ball.previous.y) * alpha,
       );
+      if (!this.reduced) {
+        const speed = Math.hypot(ball.vx, ball.vy),
+          length = Math.min(
+            50,
+            speed *
+              Math.min(0.1, Math.max(0, simulation.elapsed - ball.bornAt)),
+          );
+        const dx = ball.vx / speed,
+          dy = ball.vy / speed;
+        this.trails
+          .poly([
+            sprite.x - dy * 2.5,
+            sprite.y + dx * 2.5,
+            sprite.x - dx * length,
+            sprite.y - dy * length,
+            sprite.x + dy * 2.5,
+            sprite.y - dx * 2.5,
+          ])
+          .fill({ color: 0xffffff, alpha: 0.7 });
+      }
     }
     for (const event of simulation.events) {
       if (
@@ -236,10 +248,14 @@ export class BattleScene {
         this.effects.splice(i, 1);
         continue;
       }
-      const scale = effect.kind === 'explosion' ? 0.9 : 0.35;
-      effect.sprite.scale.set(scale * (this.reduced ? 1 : 0.7 + t * 0.7));
+      const scale =
+        effect.kind === 'explosion' ? 0.9 : effect.kind === 'water' ? 1 : 0.35;
+      effect.sprite.scale.set(
+        scale *
+          (this.reduced ? 1 : 0.7 + t * (effect.kind === 'water' ? 2 : 0.7)),
+      );
       effect.sprite.alpha = 1 - t;
-      if (effect.kind === 'explosion')
+      if (effect.kind === 'explosion' && effect.sprite instanceof Sprite)
         effect.sprite.texture = this.texture(
           t < 0.35
             ? 'explosion_1.png'
@@ -258,12 +274,7 @@ export class BattleScene {
   }
   private ship(ship: Ship, view: ViewTransform, time: number, alpha: number) {
     const ratio = ship.health / ship.maxHealth;
-    const names =
-      ship.kind === 'player'
-        ? ['ship_2.png', 'ship_14.png', 'ship_20.png']
-        : ship.kind === 'chaser'
-          ? ['ship_16.png', 'ship_9.png', 'ship_3.png']
-          : ['ship_17.png', 'ship_11.png', 'ship_23.png'];
+    const names = SHIP_FAMILIES[ship.kind];
     const name = names[ratio > 0.66 ? 0 : ratio > 0.33 ? 1 : 2] ?? 'ship_2.png';
     let visual = this.ships.get(ship.id);
     if (!visual) {
@@ -277,14 +288,15 @@ export class BattleScene {
       fill.position.set(24, 12);
       bar.addChild(frame, fill, mask);
       fill.mask = mask;
-      visual = { sprite, bar, fill, mask, health: -1, flashUntil: 0 };
+      visual = { sprite, bar, fill, mask, health: -1, name, flashUntil: 0 };
       this.ships.set(ship.id, visual);
       this.world.addChild(sprite);
       this.overlays.addChild(bar);
     }
     if (ship.health < visual.health) visual.flashUntil = time + 0.12;
     visual.sprite.texture = this.texture(name);
-    visual.sprite.tint = visual.flashUntil > time ? 0xffa896 : 0xffffff;
+    visual.name = name;
+    visual.sprite.tint = visual.flashUntil > time ? 0xfff6c2 : 0xffffff;
     const position = {
       x: ship.previous.x + (ship.x - ship.previous.x) * alpha,
       y: ship.previous.y + (ship.y - ship.previous.y) * alpha,
@@ -330,42 +342,64 @@ export class BattleScene {
       barY,
     );
     visual.bar.alpha = warning ? 0.6 : 1;
+    visual.bar.visible = ship.health > 0;
   }
   private effect(event: CombatEvent, time: number) {
     if (this.effects.length >= 64) {
       this.effects.shift()?.sprite.destroy();
     }
-    const sprite = new Sprite(
-      this.texture(
-        event.kind === 'explosion' ? 'explosion_1.png' : 'explosion_3.png',
-      ),
-    );
-    sprite.anchor.set(0.5);
+    const sprite =
+      event.kind === 'water'
+        ? new Graphics()
+            .circle(0, 0, 7)
+            .stroke({ color: 0xf0ffff, width: 2.5 })
+            .circle(0, 0, 3)
+            .fill({ color: 0xe0ffff, alpha: 0.8 })
+        : new Sprite(
+            this.texture(
+              event.kind === 'explosion'
+                ? 'explosion_1.png'
+                : 'explosion_3.png',
+            ),
+          );
+    if (sprite instanceof Sprite) {
+      sprite.anchor.set(0.5);
+      if (event.kind === 'hit' || event.kind === 'damage')
+        sprite.tint = 0xffe8aa;
+    }
     sprite.position.set(event.x, event.y);
-    if (event.kind === 'water') sprite.tint = 0x9de2ef;
     this.world.addChild(sprite);
     this.effects.push({
       sprite,
       born: time,
-      duration: event.kind === 'explosion' ? 0.45 : 0.12,
+      duration:
+        event.kind === 'explosion'
+          ? 0.45
+          : event.kind === 'water'
+            ? 0.25
+            : 0.12,
       kind: event.kind,
     });
   }
   observe() {
     return {
-      backgroundTextures: Number(this.backgroundTexture !== null),
+      backgroundTextures: 0,
+      shipAtlasUrl: this.assets.shipAtlasUrl,
+      terrainObjects: this.background.children.length,
+      shipTextures: Object.fromEntries(
+        [...this.ships].map(([id, value]) => [id, value.name]),
+      ),
       ships: this.ships.size,
       projectiles: this.balls.size,
       effects: this.effects.length,
+      effectKinds: this.effects.map((effect) => effect.kind),
     };
   }
   dispose() {
     this.world.removeFromParent();
     this.overlays.removeFromParent();
+    this.ocean.destroy();
     this.world.destroy({ children: true });
-    this.backgroundTexture?.destroy(true);
-    this.backgroundTexture = null;
-    this.backgroundSprite = null;
     if (!this.background.destroyed) this.background.destroy({ children: true });
     this.overlays.destroy({ children: true });
     this.ships.clear();

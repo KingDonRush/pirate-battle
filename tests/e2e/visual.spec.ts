@@ -23,9 +23,12 @@ for (const [name, width, height] of [
       await page.goto('/?seed=42&clock=manual');
       await page.getByLabel('Display name').fill('Captain Jack');
       await readyArtwork(page);
-      await expect(page).toHaveScreenshot(name + '-menu.png', {
-        fullPage: true,
-      });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollHeight <= innerHeight,
+        ),
+      ).toBe(true);
+      await expect(page).toHaveScreenshot(name + '-menu.png');
       await page.getByRole('button', { name: 'Play', exact: true }).click();
       await expect
         .poll(() =>
@@ -41,9 +44,12 @@ for (const [name, width, height] of [
       ).toBeVisible();
       await expect(page.getByRole('status')).toHaveText('Match saved.');
       await readyArtwork(page);
-      await expect(page).toHaveScreenshot(name + '-result.png', {
-        fullPage: true,
-      });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollHeight <= innerHeight,
+        ),
+      ).toBe(true);
+      await expect(page).toHaveScreenshot(name + '-result.png');
       expect(errors).toEqual([]);
     },
   );

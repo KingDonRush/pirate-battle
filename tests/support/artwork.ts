@@ -4,9 +4,12 @@ export async function readyArtwork(page: Page) {
     await document.fonts.ready;
     const urls = new Set<string>();
     for (const element of document.querySelectorAll('*')) {
-      for (const match of getComputedStyle(element).backgroundImage.matchAll(
-        /url\(["']?([^"')]+)["']?\)/g,
-      )) {
+      const style = getComputedStyle(element);
+      for (const match of (
+        style.backgroundImage +
+        ' ' +
+        style.borderImageSource
+      ).matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
         if (match[1]) urls.add(match[1]);
       }
     }

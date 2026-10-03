@@ -13,7 +13,7 @@ test('G06 reproducible real-rule input protocol survives to the configured deadl
       id: 'protocol',
       player: { id: 'pilot', name: 'Protocol Pilot' },
       config,
-      seed: 42,
+      seed: 8,
     });
     let input = pilotInput(game.observe(), config);
     for (let i = 0; i < 10800 && !game.endReason; i++) {

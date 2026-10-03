@@ -1,5 +1,6 @@
 import { Application, UPDATE_PRIORITY } from 'pixi.js';
 import type { GameAssets } from './assets';
+import type { Settings } from './config';
 import type { AudioService } from './audio';
 import { InputController } from './input';
 import { ReflowCoordinator, type ViewTransform } from './reflow';
@@ -7,7 +8,7 @@ import { Simulation, STEP, type MatchSession } from './simulation';
 import { BattleScene } from './rendering';
 
 export type HudSnapshot = Readonly<{
-  state: 'loading' | 'running' | 'reflowing' | 'paused' | 'finished';
+  state: 'loading' | 'running' | 'reflowing' | 'paused' | 'ending' | 'finished';
   audioError: string | null;
   rendererAvailable: boolean;
   health: number;
@@ -28,6 +29,7 @@ let pendingApplications = 0;
 let mountSequence = 0;
 export class GameRuntime {
   setReducedMotion(value: boolean) {
+    this.reducedMotion = value;
     this.reflow.setReducedMotion(value);
     this.scene.setReducedMotion(value);
   }
@@ -42,9 +44,14 @@ export class GameRuntime {
   private disposed = false;
   private initialized = false;
   private rendererAvailable = true;
+  private needsRendererCheck = false;
   private pausedReason: string | null = null;
   private accumulator = 0;
   private finishing = false;
+  private endingElapsed = 0;
+  private result: CompletedLocalMatch | null = null;
+  private delivered = false;
+  private reducedMotion: boolean;
   private lastNow = 0;
   private subscribers = new Set<() => void>();
   private hud: HudSnapshot;
@@ -55,6 +62,7 @@ export class GameRuntime {
   readonly session: MatchSession;
   private audio: AudioService;
   private finished: (result: CompletedLocalMatch) => void;
+  private completed: (result: CompletedLocalMatch) => void;
   constructor(
     host: HTMLElement,
     session: MatchSession,
@@ -62,11 +70,14 @@ export class GameRuntime {
     audio: AudioService,
     reducedMotion: boolean,
     finished: (result: CompletedLocalMatch) => void,
+    completed: (result: CompletedLocalMatch) => void,
   ) {
     this.host = host;
     this.session = session;
     this.audio = audio;
     this.finished = finished;
+    this.completed = completed;
+    this.reducedMotion = reducedMotion;
     this.simulation = new Simulation(session);
     this.input = new InputController(() => this.pause('Paused'));
     this.hud = Object.freeze({
@@ -83,15 +94,22 @@ export class GameRuntime {
       reducedMotion,
       () => this.freeze(),
       () => this.ready(),
+      session.config.level,
     );
     this.audioOwner = session.id + ':' + ++mountSequence;
     this.scene = new BattleScene(session, assets, reducedMotion);
     this.sharedTextureSources = new Set([
       assets.water.source,
+      assets.island.source,
       assets.health.frame.source,
+      ...[...assets.terrain.values()].map((texture) => texture.source),
       ...[...assets.ships.values()].map((texture) => texture.source),
     ]).size;
-    this.application.stage.addChild(this.scene.world, this.scene.overlays);
+    this.application.stage.addChild(
+      this.scene.ocean,
+      this.scene.world,
+      this.scene.overlays,
+    );
     this.observer = new ResizeObserver(this.measure);
   }
   async init() {
@@ -116,11 +134,6 @@ export class GameRuntime {
         this.destroyApplication();
         return;
       }
-      this.scene.prepareBackground(
-        this.application.renderer,
-        this.session.config.level.width,
-        this.session.config.level.height,
-      );
       // Pixi registers this method with an explicit Application context.
       // eslint-disable-next-line @typescript-eslint/unbound-method
       this.application.ticker.remove(this.application.render, this.application);
@@ -143,6 +156,7 @@ export class GameRuntime {
       document.addEventListener('visibilitychange', this.visibility);
       window.visualViewport?.addEventListener('resize', this.measure);
       window.addEventListener('resize', this.measure);
+      screen.orientation?.addEventListener('change', this.measure);
       this.beginAudio();
       this.measure();
       this.application.start();
@@ -163,7 +177,9 @@ export class GameRuntime {
   getSnapshot = () => this.hud;
   private publish() {
     const state = this.simulation.endReason
-      ? 'finished'
+      ? this.delivered
+        ? 'finished'
+        : 'ending'
       : this.pausedReason
         ? 'paused'
         : this.reflow.active
@@ -206,23 +222,60 @@ export class GameRuntime {
       Math.max(1, height),
       devicePixelRatio,
     );
-    this.reflow.request(
-      width,
-      height,
-      window.innerWidth < window.innerHeight,
-      now,
-    );
+    this.reflow.request(width, height, this.orientation(), now, [
+      this.simulation.player,
+      ...this.simulation.enemies.values(),
+      ...this.simulation.projectiles.values(),
+    ]);
     this.publish();
     this.application.start();
   };
+  private orientation() {
+    const orientation = screen.orientation;
+    if (
+      orientation &&
+      /primary|secondary/.test(orientation.type) &&
+      orientation.type.startsWith('portrait') ===
+        this.host.clientWidth < this.host.clientHeight
+    ) {
+      const naturalPortrait =
+        orientation.type.startsWith('portrait') ===
+        (orientation.angle % 180 === 0);
+      return (
+        (naturalPortrait ? Math.PI / 2 : 0) -
+        (orientation.angle * Math.PI) / 180
+      );
+    }
+    return this.host.clientWidth < this.host.clientHeight ? Math.PI / 2 : 0;
+  }
+  steer(id: string, dx: number, dy: number, mode: Settings['controlMode']) {
+    const magnitude = Math.min(1, Math.hypot(dx, dy));
+    if (magnitude < 0.15) {
+      this.input.release(id);
+      return;
+    }
+    const throttle = (magnitude - 0.15) / 0.85;
+    if (mode === 'direction')
+      this.input.steer(id, {
+        throttle,
+        turn: 0,
+        heading: Math.atan2(dx, -dy) - (this.view?.angle ?? 0),
+      });
+    else
+      this.input.steer(id, {
+        throttle: Math.max(0, -dy),
+        turn: Math.max(-1, Math.min(1, dx)),
+      });
+  }
   private freeze() {
     this.input.setEnabled(false);
-    this.audio.pause();
+    if (!this.simulation.endReason) this.audio.pause();
     this.accumulator = 0;
     this.lastNow = 0;
   }
   private ready() {
     if (this.disposed) return;
+    if (this.view) this.simulation.setArenaBounds(this.view.bounds);
     this.lastNow = 0;
     this.accumulator = 0;
     if (!this.pausedReason && !this.simulation.endReason) {
@@ -234,6 +287,14 @@ export class GameRuntime {
   private contextLost = (event: Event) => {
     event.preventDefault();
     this.rendererAvailable = false;
+    this.needsRendererCheck = false;
+    if (this.simulation.endReason) {
+      this.audio.cancelEnding(this.audioOwner);
+      this.publish();
+      // The terminal DOM presentation can finish without an available GPU.
+      this.application.start();
+      return;
+    }
     this.pause(
       'Graphics were interrupted. Waiting for the renderer to recover.',
     );
@@ -241,19 +302,24 @@ export class GameRuntime {
   };
   private contextRestored = () => {
     if (this.disposed) return;
-    this.scene.prepareBackground(
-      this.application.renderer,
-      this.session.config.level.width,
-      this.session.config.level.height,
-    );
-    this.rendererAvailable = true;
+    this.needsRendererCheck = true;
     this.pausedReason = 'Graphics recovered. Resume when you are ready.';
     this.measure();
     this.publish();
   };
-  private blur = () => this.pause('Paused because the window lost focus.');
+  private blur = () => {
+    if (this.simulation.endReason) this.audio.cancelEnding(this.audioOwner);
+    else this.pause('Paused because the window lost focus.');
+  };
   private visibility = () => {
-    if (document.hidden) this.pause('Paused because the tab was hidden.');
+    if (this.simulation.endReason) {
+      if (document.hidden) this.audio.cancelEnding(this.audioOwner);
+      else {
+        this.measure();
+      }
+    } else if (document.hidden)
+      this.pause('Paused because the tab was hidden.');
+    else this.measure();
   };
   pause(reason = 'Paused') {
     if (this.disposed || this.simulation.endReason) return;
@@ -324,8 +390,14 @@ export class GameRuntime {
     const now = performance.now(),
       elapsed =
         forcedDelta ??
-        (this.manualClock ? 0 : this.lastNow === 0 ? 0 : now - this.lastNow);
+        (this.manualClock && !this.finishing
+          ? 0
+          : this.lastNow === 0
+            ? 0
+            : now - this.lastNow);
     this.lastNow = now;
+    if (this.finishing && !document.hidden)
+      this.endingElapsed += Math.min(elapsed, 100) / 1000;
     if (
       !this.pausedReason &&
       !this.reflow.active &&
@@ -347,6 +419,7 @@ export class GameRuntime {
       this.reflow.active || this.pausedReason
         ? 1
         : Math.min(1, this.accumulator / STEP),
+      this.endingElapsed,
     );
     const counts = this.scene.observe();
     for (const key of ['ships', 'projectiles', 'effects'] as const)
@@ -354,34 +427,61 @@ export class GameRuntime {
     for (const event of this.simulation.events)
       this.audio.effect(event.kind, this.audioOwner);
     this.simulation.events.length = 0;
-    try {
-      this.application.render();
-    } catch {
-      this.rendererAvailable = false;
-      this.pause('The arena could not render. Leave this match and try again.');
-      this.application.stop();
-      this.complete();
-      return;
+    if (this.rendererAvailable || this.needsRendererCheck) {
+      try {
+        this.application.render();
+        this.rendererAvailable = true;
+        this.needsRendererCheck = false;
+      } catch {
+        this.rendererAvailable = false;
+        this.needsRendererCheck = false;
+        this.pause(
+          'The arena could not render. Leave this match and try again.',
+        );
+        if (!this.simulation.endReason) this.application.stop();
+      }
     }
-    this.reflow.afterRender(now, this.host.clientWidth, this.host.clientHeight);
+    if (this.rendererAvailable)
+      this.reflow.afterRender(
+        now,
+        this.host.clientWidth,
+        this.host.clientHeight,
+      );
     this.publish();
     this.complete();
-    if ((this.pausedReason || this.manualClock) && !this.reflow.active)
+    if (
+      (this.pausedReason || this.manualClock) &&
+      !this.reflow.active &&
+      !this.finishing
+    )
       this.application.stop();
   }
   private complete() {
     if (this.simulation.endReason && !this.finishing) {
       this.finishing = true;
       this.freeze();
-      this.application.stop();
-      this.audio.stop(this.audioOwner);
-      this.finished({
+      this.audio.ending(this.audioOwner, this.simulation.endReason);
+      this.result = Object.freeze({
         session: this.session,
         score: this.simulation.score,
         duration: this.simulation.elapsed,
         reason: this.simulation.endReason,
         date: new Date().toISOString(),
       });
+      this.completed(this.result);
+      this.application.start();
+      this.publish();
+    }
+    const duration = this.reducedMotion
+      ? 0.2
+      : this.simulation.endReason === 'death'
+        ? 0.9
+        : 0.45;
+    if (this.result && !this.delivered && this.endingElapsed >= duration) {
+      this.delivered = true;
+      this.application.stop();
+      this.publish();
+      this.finished(this.result);
     }
   }
   observe(includeFrames = false) {
@@ -396,7 +496,9 @@ export class GameRuntime {
         browserListeners:
           this.input.observe().listeners +
           (this.initialized && !this.disposed
-            ? 5 + Number(Boolean(window.visualViewport))
+            ? 5 +
+              Number(Boolean(window.visualViewport)) +
+              Number(Boolean(screen.orientation))
             : 0),
         observers: Number(this.initialized && !this.disposed),
         ticker: Number(this.initialized && this.application.ticker.started),
@@ -428,10 +530,12 @@ export class GameRuntime {
     this.input.dispose();
     this.simulation.dispose();
     this.audio.stop(this.audioOwner);
+    if (!this.delivered) this.audio.cancelEnding(this.audioOwner);
     window.removeEventListener('blur', this.blur);
     document.removeEventListener('visibilitychange', this.visibility);
     window.visualViewport?.removeEventListener('resize', this.measure);
     window.removeEventListener('resize', this.measure);
+    screen.orientation?.removeEventListener('change', this.measure);
     this.subscribers.clear();
     if (this.initialized) this.destroyApplication();
   }

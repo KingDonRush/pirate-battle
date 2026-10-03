@@ -43,6 +43,14 @@ export default defineConfig({
       use: { ...devices['Pixel 7'], defaultBrowserType: 'chromium' },
     },
     {
+      name: 'firefox-desktop',
+      testIgnore: '**/focus.spec.ts',
+      use: {
+        ...devices['Desktop Firefox'],
+        launchOptions: { firefoxUserPrefs: { 'media.volume_scale': '0.0' } },
+      },
+    },
+    {
       name: 'chromium-focus',
       testMatch: '**/focus.spec.ts',
       fullyParallel: false,
