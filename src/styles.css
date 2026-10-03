@@ -1116,11 +1116,11 @@ select:focus-visible,
     justify-content: center;
   }
   .hud-counter strong {
-    font-size: 16px;
+    font-size: 12.8px;
   }
   .counter-icon {
-    width: 18px;
-    height: 18px;
+    width: 14.4px;
+    height: 14.4px;
   }
   .hud-counter .counter-label {
     display: none;
@@ -1361,6 +1361,33 @@ select:focus-visible,
   }
   .options-tabs button {
     padding-inline: 3px;
+  }
+}
+@media (max-width: 700px), (max-height: 480px) and (orientation: landscape) {
+  .hud-counter {
+    padding-inline: 4px;
+  }
+  .hud-counter strong {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .hud-score strong {
+    min-width: 3ch;
+  }
+  .hud-time strong {
+    min-width: 5ch;
+  }
+  .counter-icon {
+    flex-shrink: 0;
+  }
+}
+@media (min-width: 701px) and (max-height: 480px) and (orientation: landscape) {
+  .hud-counter strong {
+    font-size: 18.4px;
+  }
+  .counter-icon {
+    width: 22.4px;
+    height: 22.4px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
