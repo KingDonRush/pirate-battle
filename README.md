@@ -6,6 +6,8 @@ A browser naval shooter built with React, TypeScript and PixiJS. Navigate the is
 
 [Play the public game](https://pirate-battle-three-gray.vercel.app). The production worker and browser-local mock database require no login. [Deployment](docs/deployment.md) identifies the checked release and source correspondence.
 
+[Delivery evidence](https://github.com/KingDonRush/pirate-battle/releases/tag/v1.0.0) contains downloadable HTML reports, useful failure traces, reviewed native captures, metrics and source/asset manifests. Extract the package and open its report `index.html` files; the manifest identifies every observation's actual revision.
+
 The frozen [company brief](CHALLENGE.md) is the source of requirements. [Acceptance evidence](docs/acceptance.md) distinguishes checked behavior from remaining delivery work. Delivery is tracked in [Issue #12](https://github.com/KingDonRush/pirate-battle/issues/12); a green test is not a self-awarded grade.
 
 ## Run locally

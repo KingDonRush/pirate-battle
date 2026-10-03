@@ -2,7 +2,7 @@
 
 > **Read contract:** measured solution evidence, not task tracking or authorization. Recover context through the [.agents index](../.agents/index.md) and preserve the [company brief](../CHALLENGE.md). The source, environment and finite observation window below bound every claim.
 
-The initial completed real-time profile ran on clean source `a600c89de0483dbfefb354964ccac802670f443f` (tree `31f89a15e1b99713cd11e3b7c32bf747f6905cfc`). The resource investigation then prompted a browser mock-stream cleanup, documented below; final repetition/source correspondence remains part of the delivery gate. JSON reports and the profiling HTML report accompany the public delivery evidence package linked from [acceptance](acceptance.md).
+The final real-time and retention profile ran on clean source `da5a2ed51679a1d256439728d29bfe78fa2ca4e8` (tree `01142e7a745a1fda500d53a7409b9875c993e047`). It includes the measured browser mock-stream cleanup. The public evidence package includes exact build/asset manifests so later documentation/test-only integration can establish unchanged runtime bytes. JSON reports and the profiling HTML report accompany [acceptance](acceptance.md).
 
 ## Reproduce
 
@@ -34,11 +34,11 @@ xvfb-run -a env PROFILE_VULKAN=1 PROFILE_WARMUP_AUDIT=1 E2E_PORT=4175 npm run pr
 | Configuration                               | 180 active seconds; standard 3s alternating spawns; full default combat balance |
 | Seed / ruleset                              | 42 / `v1:f011c1cb59ce7d1307cd3b5416ac2e5812a626a37a39cddff7e3a7d85e935efa`      |
 | Completed outcome                           | Time up at exactly 180s; score59; HP55; 59 spawns; both enemy roles observed    |
-| Raw frames / interval sum                   | 10,801 / 180.0097s                                                              |
+| Raw frames / interval sum                   | 10,801 / 180.0099s                                                              |
 | FPS                                         | **60.0023**                                                                     |
 | p95 raw frame interval                      | **17.40ms**                                                                     |
-| Maximum raw interval                        | **19.80ms**                                                                     |
-| Peak rendered ships / projectiles / effects | **2 / 13 / 7**                                                                  |
+| Maximum raw interval                        | **18.40ms**                                                                     |
+| Peak rendered ships / projectiles / effects | **2 / 14 / 7**                                                                  |
 | Peak audio voices                           | 14, including at most two loops                                                 |
 | Pauses / reflows / page errors              | 0 / 0 / 0                                                                       |
 
@@ -52,20 +52,20 @@ Every cycle uses the same document: start, eight active seconds of real movement
 
 | Cycle | Post-GC JavaScript heap, bytes | DOM nodes | JS listeners |
 | ----- | -----------------------------: | --------: | -----------: |
-| 1     |                      7,343,448 |       249 |          188 |
-| 2     |                      7,733,700 |       325 |          229 |
-| 3     |                      7,900,684 |       325 |          229 |
-| 4     |                      8,007,764 |       325 |          229 |
-| 5     |                      8,161,540 |       249 |          188 |
-| 6     |                      8,192,852 |       249 |          188 |
-| 7     |                      8,259,752 |       249 |          188 |
-| 8     |                      8,316,424 |       249 |          188 |
-| 9     |                      8,644,864 |       249 |          188 |
-| 10    |                      8,704,424 |       249 |          188 |
+| 1     |                      7,349,156 |       249 |          188 |
+| 2     |                      7,720,884 |       249 |          188 |
+| 3     |                      7,907,784 |       325 |          229 |
+| 4     |                      8,006,500 |       249 |          188 |
+| 5     |                      8,190,552 |       249 |          188 |
+| 6     |                      8,256,788 |       325 |          229 |
+| 7     |                      8,287,956 |       249 |          188 |
+| 8     |                      8,375,484 |       325 |          229 |
+| 9     |                      8,671,456 |       249 |          188 |
+| 10    |                      8,758,256 |       325 |          229 |
 
-All ten cycles ended with zero live/pending Applications, canvases attached to the document, input/browser listeners, observers, owned tickers, background textures, ships, projectiles, effects and active audio voices/loops. Window listener counts stayed constant. The first transient DOM/listener increase returned to the initial counts and did not accumulate. Unique runtime/scene constructor objects were absent from every post-GC heap. Pixi Application/ticker constructor names collide after minification; the report marks those counts ambiguous and does not treat them as instance counts.
+All ten cycles ended with zero live/pending Applications, canvases attached to the document, input/browser listeners, observers, owned tickers, background textures, ships, projectiles, effects and active audio voices/loops. Window listener counts stayed constant. Transient DOM/listener increases returned to the initial counts and did not accumulate. Unique runtime/scene constructor objects were absent from every post-GC heap. Pixi Application/ticker constructor names collide after minification; the report marks those counts ambiguous and does not treat them as instance counts.
 
-The overall heap still increased by 1,360,976 bytes. Category comparison accounts for 1,240,536 bytes (91.2% of that delta) in compiled **code**, with 50,032 bytes of strings and smaller browser/diagnostic structures. This supports compilation/diagnostic warm-up as the main observed growth, rather than retained combat worlds; it does not prove an indefinitely flat heap. Ten cycles are the stated observation window.
+The overall heap still increased by 1,409,100 bytes. Category comparison accounts for 1,259,840 bytes (89.4% of that delta) in compiled **code**, with 50,032 bytes of strings and smaller browser/diagnostic structures. This supports compilation/diagnostic warm-up as the main observed growth, rather than retained combat worlds; it does not prove an indefinitely flat heap. Ten cycles are the stated observation window.
 
 Native counts stayed bounded: two canvas objects, two WebGL1 objects, one WebGL2 object and one live application audio context. Strong-root paths show Blink per-context wrappers/pending activity and a compiled-module WebGL reference, not old runtime/scene owners. Pixi's installed `getTestContext` intentionally caches a capability-test context; that is consistent with the module-root reference. Stopped audio nodes retained by browser pending activity were 14, briefly 15, then 14 again; the application's voice map and connections were already empty. Shared decoded buffers and atlas sources remain owned by the still-open application for reuse. Closing the browser closes that final owner.
 
@@ -79,12 +79,12 @@ An empty-world WebGL draw probe measured **14 draws before** and **4 after** cac
 
 A focused native-root audit found MessagePorts **51→61→71→81→91** over five cycles. The locked worker transfers separate request/response clones for lifecycle observation; quiet mode left those streams unconsumed. The browser mock owner now cancels those observational bodies through `response:mocked`/`response:bypass` and removes its listeners on HMR disposal. The original client/asset responses remain separate in the installed worker's code. The generated worker and dependency versions are unchanged.
 
-The affected optimized five-cycle comparison returned **3→3→3→3→3** native ports, with the same actual play/leave path and zero owned session resources. The profiling regression now requires a constant port count. The surviving roots are shared React/browser/library infrastructure; they are distinct from old sessions. The native source-size and heap-code growth remain measured separately. Full HTTP/asset/worker regressions and the final clean real-time profile must pass after this correction.
+The affected optimized five-cycle comparison returned **3→3→3→3→3** native ports, with the same actual play/leave path and zero owned session resources. The profiling regression now requires a constant port count. The surviving roots are shared React/browser/library infrastructure; they are distinct from old sessions. The native source-size and heap-code growth remain measured separately. The complete optimized HTTP/asset/worker regression passed 99 cases after this correction; the final clean profile repeated all ten cycles with three ports each and passed the constant-port assertion.
 
 The public [MSW lifecycle API](https://mswjs.io/api/life-cycle-events) documents response observation. The cancellation decision is specific to the separate cloned bodies verified in this locked worker; recheck that ownership before upgrading MSW or adding another body-observation consumer.
 
 ## Digital audio levels
 
-`PROFILE_AUDIO_LEVELS=1 npm run profile` selects a separate 30-active-second real-input mix audit. A read-only analyser observes the master gain while the genuine input pilot fires all three weapons. Test-browser output remains muted. The clean b4e3319 build produced 945 sampled windows, peak0.69359, maximum RMS0.26671 and zero sampled peaks above1, with default master70%/effects80%/ambience35% and no page errors. No limiter or arbitrary volume reduction was added without a demonstrated clipping problem.
+`PROFILE_AUDIO_LEVELS=1 npm run profile` selects a separate 30-active-second real-input mix audit. A read-only analyser observes the master gain while the genuine input pilot fires all three weapons. Test-browser output remains muted. The clean b4e3319 build produced 945 sampled windows, peak 0.69359, maximum RMS 0.26671 and zero sampled peaks above1, with default master70%/effects80%/ambience35% and no page errors. No limiter or arbitrary volume reduction was added without a demonstrated clipping problem.
 
 These are digital signal measurements for this workload. They do not establish perceived timing, masking, loop seams or an audible physical-device review. The game remains playable with visible feedback while muted; device/listening limits are recorded in [acceptance](acceptance.md).
