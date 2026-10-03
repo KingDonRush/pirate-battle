@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { probeRenderedArena } from '../support/canvas-pixels';
 import { createConfig, DEFAULT_SETTINGS } from '../../src/game/config';
 import type { GameRuntime } from '../../src/game/runtime';
 import { pilotInput } from '../support/pilot';
@@ -133,62 +134,8 @@ test('Firefox and Chromium draw the complete terrain after load, resize and relo
         }),
       )
       .toBe(true);
-    const state = await page.evaluate(() => {
-      const canvas = document.querySelector('canvas')!;
-      const gl = (canvas.getContext('webgl2') ??
-        canvas.getContext('webgl')) as WebGLRenderingContext;
-      const view = window.pirateBattle!.observe().view!;
-      // A real input/clock advance renders the normal canvas; inspect its framebuffer.
-      window.pirateBattle!.advance(17);
-      const pixels = new Uint8Array(4);
-      gl.readPixels(
-        Math.round(canvas.width * 0.03),
-        Math.round(canvas.height * 0.45),
-        1,
-        1,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        pixels,
-      );
-      const land = [
-        { x: 208, y: 168 },
-        { x: 988, y: 132 },
-        { x: 252, y: 552 },
-        { x: 968, y: 516 },
-      ].map((point) => {
-        const dx = point.x - view.originX,
-          dy = point.y - view.originY;
-        const x =
-          view.x +
-          (dx * Math.cos(view.angle) - dy * Math.sin(view.angle)) * view.scale;
-        const y =
-          view.y +
-          (dx * Math.sin(view.angle) + dy * Math.cos(view.angle)) * view.scale;
-        const color = new Uint8Array(4);
-        gl.readPixels(
-          Math.round((x * canvas.width) / view.width),
-          Math.round(((view.height - y) * canvas.height) / view.height),
-          1,
-          1,
-          gl.RGBA,
-          gl.UNSIGNED_BYTE,
-          color,
-        );
-        return [...color];
-      });
-      const host = document
-        .querySelector('.arena-viewport')!
-        .getBoundingClientRect();
-      return {
-        rgba: [...pixels],
-        land,
-        view,
-        height: innerHeight,
-        width: innerWidth,
-        host: { x: host.x, y: host.y, width: host.width, height: host.height },
-        scene: window.pirateBattle!.observe().resources.scene,
-      };
-    });
+    const state = await page.evaluate(probeRenderedArena, 'terrain' as const);
+    if (state.kind !== 'terrain') throw new Error('Unexpected canvas probe.');
     expect(state.host.x).toBe(0);
     expect(state.host.y).toBe(0);
     expect(state.host.width).toBe(state.width);
@@ -659,41 +606,8 @@ test('front cannon leaves a visible white tapered trail through normal rendering
   // Let this real shot clear the player's upright health bar before sampling it.
   await page.evaluate(() => window.pirateBattle?.advance(250));
   await page.keyboard.up(' ');
-  const pixels = await page.evaluate(() => {
-    // Inspect immediately after the normal render, before buffer presentation clears it.
-    window.pirateBattle!.advance(17);
-    const state = window.pirateBattle!.observe(),
-      ball = state.projectiles.find((p) => p.owner === 'player')!,
-      view = state.view!;
-    const canvas = document.querySelector('canvas')!,
-      gl = (canvas.getContext('webgl2') ??
-        canvas.getContext('webgl')) as WebGLRenderingContext;
-    const sample = (x: number, y: number) => {
-      const dx = x - view.originX,
-        dy = y - view.originY;
-      const vx =
-        view.x +
-        (dx * Math.cos(view.angle) - dy * Math.sin(view.angle)) * view.scale;
-      const vy =
-        view.y +
-        (dx * Math.sin(view.angle) + dy * Math.cos(view.angle)) * view.scale;
-      const rgba = new Uint8Array(4);
-      gl.readPixels(
-        Math.round((vx * canvas.width) / view.width),
-        Math.round(((view.height - vy) * canvas.height) / view.height),
-        1,
-        1,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        rgba,
-      );
-      return [...rgba];
-    };
-    return {
-      trail: sample(ball.x, ball.y + 15),
-      water: sample(ball.x + 12, ball.y + 15),
-    };
-  });
+  const pixels = await page.evaluate(probeRenderedArena, 'trail' as const);
+  if (pixels.kind !== 'trail') throw new Error('Unexpected canvas probe.');
   expect(pixels.trail[0]!).toBeGreaterThan(pixels.water[0]! + 35);
   expect(pixels.trail[3]).toBe(255);
   await page.screenshot({ path: info.outputPath('white-trail.png') });
