@@ -275,11 +275,30 @@ test('ships spawn healthy and keep the correct damage family under real attacks'
 declare global {
   interface Window {
     endingRead?: () => ReturnType<GameRuntime['observe']>;
+    terminalCue?: { starts: number; stops: number };
   }
 }
 test('death retains an animated ending, terminal sound and immediate single result', async ({
   page,
 }, info) => {
+  await page.addInitScript(() => {
+    window.terminalCue = { starts: 0, stops: 0 };
+    // Observe real Web Audio calls without changing their clock or buffers.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const start = AudioBufferSourceNode.prototype.start;
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const stop = AudioBufferSourceNode.prototype.stop;
+    AudioBufferSourceNode.prototype.start = function (...args) {
+      if (Math.abs((this.buffer?.duration ?? 0) - 1.6) < 0.001)
+        window.terminalCue!.starts++;
+      return start.apply(this, args);
+    };
+    AudioBufferSourceNode.prototype.stop = function (...args) {
+      if (Math.abs((this.buffer?.duration ?? 0) - 1.6) < 0.001)
+        window.terminalCue!.stops++;
+      return stop.apply(this, args);
+    };
+  });
   await start(page, true);
   await expect
     .poll(() =>
@@ -324,6 +343,10 @@ test('death retains an animated ending, terminal sound and immediate single resu
   expect(ended.hud.state).toBe('ending');
   expect(ended.endReason).toBe('death');
   expect(ended.player.health).toBe(0);
+  await expect
+    .poll(() => page.evaluate(() => window.terminalCue?.starts))
+    .toBe(1);
+  expect(await page.evaluate(() => window.terminalCue?.stops)).toBe(0);
   await expect(page.locator('canvas')).toHaveCount(1);
   await expect(
     page.getByRole('button', { name: 'Play Again', exact: true }),
@@ -367,7 +390,10 @@ test('death retains an animated ending, terminal sound and immediate single resu
   ] as const)
     expect(during[key]).toEqual(ended[key]);
   expect(during.resources.audio.loops).toBe(0);
-  expect(during.resources.audio.terminalVoices).toBe(1);
+  expect(await page.evaluate(() => window.terminalCue)).toEqual({
+    starts: 1,
+    stops: 0,
+  });
   await page.screenshot({ path: info.outputPath('ending-200ms.png') });
   await page.clock.runFor(300);
   await page.screenshot({ path: info.outputPath('ending-500ms.png') });
@@ -376,6 +402,11 @@ test('death retains an animated ending, terminal sound and immediate single resu
     page.getByRole('heading', { name: 'Defeated', exact: true }),
   ).toBeVisible();
   await expect(page.locator('canvas')).toHaveCount(0);
+  // It may end naturally during slow screenshot/IDB operations; disposal must not stop it.
+  expect(await page.evaluate(() => window.terminalCue)).toEqual({
+    starts: 1,
+    stops: 0,
+  });
   expect(
     await page.evaluate(() => window.endingRead?.().resources.audio.loops),
   ).toBe(0);
@@ -391,6 +422,7 @@ test('death retains an animated ending, terminal sound and immediate single resu
   ).toBe(0);
   await page.evaluate(() => {
     delete window.endingRead;
+    delete window.terminalCue;
   });
 });
 
