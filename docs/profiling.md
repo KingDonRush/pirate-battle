@@ -82,3 +82,9 @@ A focused native-root audit found MessagePorts **51→61→71→81→91** over f
 The affected optimized five-cycle comparison returned **3→3→3→3→3** native ports, with the same actual play/leave path and zero owned session resources. The profiling regression now requires a constant port count. The surviving roots are shared React/browser/library infrastructure; they are distinct from old sessions. The native source-size and heap-code growth remain measured separately. Full HTTP/asset/worker regressions and the final clean real-time profile must pass after this correction.
 
 The public [MSW lifecycle API](https://mswjs.io/api/life-cycle-events) documents response observation. The cancellation decision is specific to the separate cloned bodies verified in this locked worker; recheck that ownership before upgrading MSW or adding another body-observation consumer.
+
+## Digital audio levels
+
+`PROFILE_AUDIO_LEVELS=1 npm run profile` selects a separate 30-active-second real-input mix audit. A read-only analyser observes the master gain while the genuine input pilot fires all three weapons. Test-browser output remains muted. The clean b4e3319 build produced 945 sampled windows, peak0.69359, maximum RMS0.26671 and zero sampled peaks above1, with default master70%/effects80%/ambience35% and no page errors. No limiter or arbitrary volume reduction was added without a demonstrated clipping problem.
+
+These are digital signal measurements for this workload. They do not establish perceived timing, masking, loop seams or an audible physical-device review. The game remains playable with visible feedback while muted; device/listening limits are recorded in [acceptance](acceptance.md).

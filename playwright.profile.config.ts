@@ -4,9 +4,11 @@ const baseURL = `http://127.0.0.1:${port}`;
 export default defineConfig({
   testDir: './tests/profiling',
   testMatch:
-    process.env.PROFILE_RENDER_COST === '1'
-      ? '**/render-cost.spec.ts'
-      : '**/performance.spec.ts',
+    process.env.PROFILE_AUDIO_LEVELS === '1'
+      ? '**/audio-levels.spec.ts'
+      : process.env.PROFILE_RENDER_COST === '1'
+        ? '**/render-cost.spec.ts'
+        : '**/performance.spec.ts',
   workers: 1,
   timeout: 300000,
   retries: 0,
