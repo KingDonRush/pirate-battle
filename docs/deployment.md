@@ -4,7 +4,7 @@
 
 The approved target is a public Vercel release in the personal **kingdonrush / kingdonrushs-projects** account, using project **pirate-battle**. The repository is [KingDonRush/pirate-battle](https://github.com/KingDonRush/pirate-battle). The project exists with Vite, Node22, repository root, `npm ci`, `npm run build` and `dist`. Project-scoped password/SSO/IP protection is disabled for evaluator access; unrelated account/project settings are preserved.
 
-[Public game](https://pirate-battle-three-gray.vercel.app) currently serves the historical v1.0.0 artifact from main1942047. The corrected revision must replace it only after candidate checks/protected integration; its live build-info and anonymous file hashes identify the delivered source. Prior99-case public Chromium evidence cannot establish the new Firefox/full-viewport/damage/ending acceptance. Current production verification includes Chromium desktop/touch and Firefox desktop with the normal MSW/Query/Axios path.
+[Public game](https://pirate-battle-three-gray.vercel.app) uses the existing personal project. The corrected production artifact is identified by its live `build-info.json` and the [v1.1.0 delivery manifest](https://github.com/KingDonRush/pirate-battle/releases/tag/v1.1.0). The publication gate requires protected integration and current main checks, then anonymous Chromium desktop/touch and Firefox desktop with the normal MSW/Query/Axios path. Earlier v1.0.0/99-case public evidence is historical and does not establish this correction's acceptance. The owning [Issue#20](https://github.com/KingDonRush/pirate-battle/issues/20) records the actual deployment identity and final check outcome after those gates, never from a READY response alone.
 
 ## Build and source correspondence
 

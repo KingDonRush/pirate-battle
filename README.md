@@ -4,9 +4,9 @@
 
 A browser naval shooter built with React, TypeScript and PixiJS. Navigate the islands, fight Chasers and Shooters, and survive until the active match clock expires. The supplied challenge artwork anchors the menus, ships, weapons, terrain and HUD. The redesigned four-island archipelago supports portrait, landscape and inverted orientation with one rigid transform. Water fills the game viewport and every visible edge is navigable.
 
-[Play the public game](https://pirate-battle-three-gray.vercel.app). The production worker and browser-local mock database require no login. The existing v1.0.0 publication is historical while the correction candidate is validated; current release evidence is identified in acceptance. [Deployment](docs/deployment.md) identifies the checked release and source correspondence.
+[Play the public game](https://pirate-battle-three-gray.vercel.app). The production worker and browser-local mock database require no login. [Deployment](docs/deployment.md) identifies the checked release and source correspondence.
 
-[Delivery evidence](https://github.com/KingDonRush/pirate-battle/releases/tag/v1.0.0) contains downloadable HTML reports, useful failure traces, reviewed native captures, metrics and source/asset manifests. Extract the package and open its report `index.html` files; the manifest identifies every observation's actual revision.
+[Delivery evidence](https://github.com/KingDonRush/pirate-battle/releases/tag/v1.1.0) contains downloadable HTML reports, useful failure traces, reviewed native captures, metrics and source/asset manifests. Extract the package and open its report `index.html` files; the manifest identifies every observation's actual revision.
 
 The frozen [company brief](CHALLENGE.md) is the source of requirements. [Acceptance evidence](docs/acceptance.md) distinguishes checked behavior from remaining delivery work. Delivery is tracked in [Issue #12](https://github.com/KingDonRush/pirate-battle/issues/12); a green test is not a self-awarded grade.
 
@@ -37,7 +37,7 @@ npm run profile
 
 `npm run check` runs the normal structure, lint, types, formatting, build and browser suite. Headed native-focus checks need a display; Linux CI uses `xvfb-run -a npm run check`. CI runs the four browser projects on separate runners with one worker each and a protected `verify` aggregator that requires source checks and every browser job to succeed. Measured software-rendered high-DPR cases have bounded CI wall-clock budgets; active match durations, API timeouts, assertions and zero retries are unchanged. `npm run check` remains the complete local command. The optimized preview defaults to port 4173. If another application owns that port, use `npm run preview -- --port 4175` or `E2E_PORT=4175 npm run test:e2e`; do not stop the other application. The install command includes Chromium and Firefox and uses `PLAYWRIGHT_SKIP_BROWSER_GC=1` to preserve shared browser versions.
 
-Tests silence only their browser's audio output; game sound preferences and desktop audio remain unchanged. [Profiling](docs/profiling.md) records actual source, hardware/backend, a genuine 180-active-second sample and comparable disposal cycles. Reference-v2 results do not verify the changed archipelago-v3 renderer.
+Tests silence only their browser's audio output; game sound preferences and desktop audio remain unchanged. [Profiling](docs/profiling.md) records actual source, hardware/backend, a genuine 180-active-second sample and comparable disposal cycles. The corrected archipelago-v3 sample reached60.0024 FPS with p95 raw frames of17.40 ms on the declared RTX4060Ti/ANGLE Vulkan environment; its66 runtime/static hashes bind the result to the delivered build.
 
 ## Controls and player identity
 
