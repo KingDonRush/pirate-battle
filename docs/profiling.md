@@ -2,7 +2,7 @@
 
 > **Read contract:** measured source-bound evidence, not task state or authorization. The [company brief](../CHALLENGE.md) stays unchanged. Environment, workload and finite observation window bound these claims.
 
-The final rules4 `archipelago-v3` renderer and edge/HUD corrections were measured on clean source `b352012298f000b205ba4504f93003c2b0af3cbb`. The build manifest records the exact source tree, runtime dependencies and every shipped file. P01 completed180 active seconds; an interruption after that result prevented completion of the first P02 attempt, so the remaining five-cycle P02 measurement was executed separately on the same unchanged artifact. Its HTML report covers P02; P01's raw frame/identity JSON establishes the completed match. Neither is silently relabelled to a later integration commit. The final delivery manifest compares all runtime hashes and identifies the integrated public source.
+The earlier edge-only rules4 `archipelago-v3` renderer and edge/HUD corrections were measured on clean source `b352012298f000b205ba4504f93003c2b0af3cbb`. The build manifest records the exact source tree, runtime dependencies and every shipped file. P01 completed180 active seconds; an interruption after that result prevented completion of the first P02 attempt, so the remaining five-cycle P02 measurement was executed separately on the same unchanged artifact. Its HTML report covers P02; P01's raw frame/identity JSON establishes the completed match. Neither is silently relabelled to a later integration commit. The final160-unit coast-corridor/AI refinement changes this runtime; this sample is historical for that refinement. The final delivery manifest records the newly measured build and integrated public source.
 
 Earlier16231ad/a03977ed/39455a3 samples are historical after the boundary behavior changed. They are not substituted for these final metrics. Documentation-only integration preserves runtime files; the final build-info identifies its own commit/time.
 
@@ -64,7 +64,7 @@ Heap grew836,428bytes. Compiled-code self size accounts for767,272bytes (**91.73
 
 The live application intentionally keeps sixteen shared texture sources,14decoded-buffer keys and one suspended audio context. WebGL wrappers stayed bounded (two WebGL1/one WebGL2), and browser-pending stopped audio sources varied12→11 rather than growing. Their application voice maps/connections were already empty; native browser pending activity is distinct from an active sound. The browser closes the final application owner after measurement. Heap self size is not total GPU memory.
 
-The direct terrain groups meet the target in this declared workload without reinstating the Firefox-breaking scenery RenderTexture. No speculative pooling, culling, lowered DPR or altered combat balance was added. Shared atlas/buffer retention has a current reuse purpose; session resources have verified closure.
+The earlier direct terrain groups met the target in that declared workload without reinstating the Firefox-breaking scenery RenderTexture. No speculative pooling, culling, lowered DPR or altered combat balance was added. Shared atlas/buffer retention has a current reuse purpose; session resources have verified closure.
 
 ## Evidence limits
 

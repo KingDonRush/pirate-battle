@@ -28,10 +28,9 @@ test('G05 standard enemies keep attacking a player parked at the actual north bo
   await start(page, info.project.name === 'chromium-mobile');
   const initial = await page.evaluate(() => window.pirateBattle!.observe());
   await hold(page, 'w', 1000);
-  await hold(page, 'd', 250);
   await hold(page, 'w', 4000);
   const edge = await page.evaluate(() => window.pirateBattle!.observe());
-  expect(edge.player.y - edge.arenaBounds.y).toBeLessThan(55);
+  expect(edge.player.y - edge.arenaBounds.y).toBeLessThan(65);
   let attacked = edge;
   for (
     let step = 0;
@@ -75,10 +74,10 @@ test('G03 approaching the visible edge keeps the camera fixed and allows turning
 }, info) => {
   await start(page, info.project.name === 'chromium-mobile');
   const initial = await page.evaluate(() => window.pirateBattle!.observe());
-  // Sail through the central open channel, then reach the north edge diagonally.
-  await hold(page, 'w', 1000);
+  // Stay in the centre channel; finish with a diagonal heading at the boundary.
+  await hold(page, 'w', 3000);
   await hold(page, 'd', 250);
-  await hold(page, 'w', 4000);
+  await hold(page, 'w', 500);
   const edge = await page.evaluate(() => window.pirateBattle!.observe());
   await hold(page, 'a', 500);
   const turned = await page.evaluate(() => window.pirateBattle!.observe());
@@ -87,7 +86,7 @@ test('G03 approaching the visible edge keeps the camera fixed and allows turning
     contentType: 'application/json',
   });
   expect(edge.endReason).toBeNull();
-  expect(edge.player.y - edge.arenaBounds.y).toBeLessThan(55);
+  expect(edge.player.y - edge.arenaBounds.y).toBeLessThan(65);
   expect(edge.view).toEqual(initial.view);
   expect(edge.arenaBounds).toEqual(initial.arenaBounds);
   expect(turned.view).toEqual(initial.view);
@@ -133,7 +132,7 @@ for (const [name, commands] of [
       // Use open-water corridors with full turning clearance from the islands.
       for (const [key, milliseconds] of commands)
         await hold(page, key, milliseconds);
-      await hold(page, 'w', 6000);
+      await hold(page, 'w', 7500);
       const edge = await page.evaluate(() => window.pirateBattle!.observe());
       await hold(page, 'd', 1000);
       const turned = await page.evaluate(() => window.pirateBattle!.observe());

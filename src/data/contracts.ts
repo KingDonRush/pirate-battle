@@ -144,6 +144,9 @@ export function decodeConfig(value: unknown): MatchConfig {
       ...(level.boundsPolicy === 'viewport'
         ? { boundsPolicy: 'viewport' as const }
         : {}),
+      ...(level.navigationPadding !== undefined
+        ? { navigationPadding: number(level.navigationPadding, 0, 512) }
+        : {}),
     }),
     player: Object.freeze({
       health: number(player.health, 1),

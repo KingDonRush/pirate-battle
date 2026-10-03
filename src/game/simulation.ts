@@ -2,7 +2,7 @@ import type { MatchConfig, PlayerIdentity, WeaponConfig } from './config';
 import {
   angleDifference,
   canOccupy,
-  containHull,
+  resolveHullRotation,
   castHull,
   castIsland,
   distance,
@@ -195,7 +195,7 @@ export class Simulation {
       if (enemy.activeAt > this.elapsed || enemy.health <= 0) continue;
       const balance =
         config.enemies[enemy.kind === 'chaser' ? 'chaser' : 'shooter'];
-      let target: Point = this.player;
+      let target: Point | null = this.player;
       if (!directPath(enemy, this.player, config)) {
         if (this.elapsed >= enemy.navigateAt) {
           enemy.path = findPath(enemy, this.player, config, this.arena);
@@ -207,9 +207,12 @@ export class Simulation {
           distance(enemy, enemy.path[0]) < 28
         )
           enemy.path.shift();
-        target = enemy.path[0] ?? enemy;
+        target = enemy.path[0] ?? null;
       } else enemy.path.length = 0;
-      const desired = Math.atan2(target.x - enemy.x, -(target.y - enemy.y));
+      const desired = Math.atan2(
+        (target ?? this.player).x - enemy.x,
+        -((target ?? this.player).y - enemy.y),
+      );
       const turn = Math.max(
         -1,
         Math.min(
@@ -221,9 +224,10 @@ export class Simulation {
       this.move(
         enemy,
         turn,
-        enemy.kind === 'shooter' &&
-          range < balance.range * 0.72 &&
-          directPath(enemy, this.player, config)
+        target === null ||
+          (enemy.kind === 'shooter' &&
+            range < balance.range * 0.72 &&
+            directPath(enemy, this.player, config))
           ? 0
           : balance.speed,
         balance.turnSpeed,
@@ -279,8 +283,14 @@ export class Simulation {
     ship.previous.y = ship.y;
     ship.previousHeading = ship.heading;
     const heading = ship.heading + turn * turnSpeed * STEP;
-    const rotated = containHull(ship, heading, this.session.config, this.arena);
-    if (canOccupy(rotated, heading, this.session.config, this.arena)) {
+    const rotated = resolveHullRotation(
+      ship,
+      heading,
+      ship.heading,
+      this.session.config,
+      this.arena,
+    );
+    if (rotated) {
       ship.heading = heading;
       ship.x = rotated.x;
       ship.y = rotated.y;

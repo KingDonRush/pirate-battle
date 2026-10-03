@@ -21,11 +21,11 @@ export function fitWorld(
   const originX = level.width / 2,
     originY = level.height / 2;
   const extentX = Math.max(
-    originX,
+    originX + (level.navigationPadding ?? 0),
     ...coverage.map((point) => Math.abs(point.x - originX) + 72),
   );
   const extentY = Math.max(
-    originY,
+    originY + (level.navigationPadding ?? 0),
     ...coverage.map((point) => Math.abs(point.y - originY) + 72),
   );
   const c = Math.abs(Math.cos(angle)),

@@ -7,10 +7,19 @@ import {
   type Rect,
 } from './geometry';
 export function directPath(a: Point, b: Point, config: MatchConfig) {
+  const length = distance(a, b);
+  const dx = length === 0 ? 0 : (b.x - a.x) / length;
+  const dy = length === 0 ? -1 : (b.y - a.y) / length;
+  const start = {
+    x: a.x - dx * config.hull.halfLength,
+    y: a.y - dy * config.hull.halfLength,
+  };
+  const end = {
+    x: b.x + dx * config.hull.halfLength,
+    y: b.y + dy * config.hull.halfLength,
+  };
   return config.level.islands.every(
-    (island) =>
-      castIsland(a, b, island, config.hull.radius + config.hull.halfLength) ===
-      null,
+    (island) => castIsland(start, end, island, config.hull.radius) === null,
   );
 }
 // A* is used only when a direct route is blocked; final movement still checks actual hull geometry.

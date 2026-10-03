@@ -154,6 +154,39 @@ export function containHull(
   };
 }
 
+export function resolveHullRotation(
+  position: Point,
+  heading: number,
+  previousHeading: number,
+  config: MatchConfig,
+  bounds: Rect,
+): Point | null {
+  const contained = containHull(position, heading, config, bounds);
+  if (canOccupy(contained, heading, config, bounds)) return contained;
+  // Resolve only the footprint introduced by this angular step. A shoreline
+  // contact can push the hull outward, but cannot teleport it across an island.
+  const reach =
+    config.hull.halfLength *
+      Math.abs(angleDifference(heading, previousHeading)) +
+    1e-6;
+  for (let ring = 1; ring <= 4; ring++) {
+    for (let direction = 0; direction < 16; direction++) {
+      const angle = (direction * Math.PI) / 8;
+      const candidate = containHull(
+        {
+          x: position.x + (Math.cos(angle) * reach * ring) / 4,
+          y: position.y + (Math.sin(angle) * reach * ring) / 4,
+        },
+        heading,
+        config,
+        bounds,
+      );
+      if (canOccupy(candidate, heading, config, bounds)) return candidate;
+    }
+  }
+  return null;
+}
+
 export function castIsland(
   a: Point,
   b: Point,

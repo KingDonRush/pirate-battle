@@ -82,7 +82,9 @@ test('G05 real keyboard navigation and defence makes enemies bypass an island', 
     const state = await page.evaluate(() => window.pirateBattle?.observe());
     if (!state) break;
     for (const enemy of state.enemies) {
-      expect(canOccupy(enemy, enemy.heading, config)).toBe(true);
+      expect(canOccupy(enemy, enemy.heading, config, state.arenaBounds)).toBe(
+        true,
+      );
       const obstruction = config.level.islands.some(
         (island) => castIsland(enemy, state.player, island, 5) !== null,
       );
