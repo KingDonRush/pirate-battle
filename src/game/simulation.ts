@@ -497,6 +497,10 @@ export class Simulation {
         heading: e.heading,
         health: e.health,
         activeAt: e.activeAt,
+        velocity: {
+          x: (e.x - e.previous.x) / STEP,
+          y: (e.y - e.previous.y) / STEP,
+        },
       })),
       projectiles: [...this.projectiles.values()].map((p) => ({
         ...p,
