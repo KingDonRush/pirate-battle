@@ -116,6 +116,11 @@ export class GameRuntime {
         this.destroyApplication();
         return;
       }
+      this.scene.prepareBackground(
+        this.application.renderer,
+        this.session.config.level.width,
+        this.session.config.level.height,
+      );
       // Pixi registers this method with an explicit Application context.
       // eslint-disable-next-line @typescript-eslint/unbound-method
       this.application.ticker.remove(this.application.render, this.application);
@@ -236,6 +241,11 @@ export class GameRuntime {
   };
   private contextRestored = () => {
     if (this.disposed) return;
+    this.scene.prepareBackground(
+      this.application.renderer,
+      this.session.config.level.width,
+      this.session.config.level.height,
+    );
     this.rendererAvailable = true;
     this.pausedReason = 'Graphics recovered. Resume when you are ready.';
     this.measure();
@@ -391,6 +401,14 @@ export class GameRuntime {
         observers: Number(this.initialized && !this.disposed),
         ticker: Number(this.initialized && this.application.ticker.started),
         sharedTextureSources: this.sharedTextureSources,
+        classNames: {
+          runtime: this.constructor.name,
+          scene: this.scene.constructor.name,
+          application: this.application.constructor.name,
+          ticker: this.initialized
+            ? this.application.ticker.constructor.name
+            : null,
+        },
         renderer: this.initialized ? this.application.renderer.type : null,
         resolution: this.initialized
           ? this.application.renderer.resolution

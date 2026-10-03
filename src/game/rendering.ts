@@ -3,6 +3,8 @@ import {
   Graphics,
   Sprite,
   TilingSprite,
+  Rectangle,
+  type Renderer,
   type Texture,
 } from 'pixi.js';
 import type { GameAssets } from './assets';
@@ -29,6 +31,9 @@ export class BattleScene {
   }
   readonly world = new Container();
   readonly overlays = new Container();
+  private background = new Container();
+  private backgroundTexture: Texture | null = null;
+  private backgroundSprite: Sprite | null = null;
   private ships = new Map<number, ShipView>();
   private balls = new Map<number, Sprite>();
   private effects: Effect[] = [];
@@ -44,12 +49,13 @@ export class BattleScene {
     });
     water.tileScale.set(2.4);
     water.tint = 0xcfeff4;
-    this.world.addChild(water);
+    this.background.addChild(water);
+    this.world.addChild(this.background);
     const worldClip = new Graphics()
       .rect(0, 0, session.config.level.width, session.config.level.height)
       .fill(0xffffff);
-    this.world.addChild(worldClip);
-    this.world.mask = worldClip;
+    this.background.addChild(worldClip);
+    this.background.mask = worldClip;
     // Both shores and their masks share the collision geometry. Interior art
     // repeats at a uniform scale instead of stretching the painted texture.
     for (const [texture, inset, tint] of [
@@ -119,7 +125,7 @@ export class BattleScene {
           }
         }
       }
-      this.world.addChild(ground, mask);
+      this.background.addChild(ground, mask);
       ground.mask = mask;
     }
     if (session.config.level.version === 'reference-v2') {
@@ -130,7 +136,7 @@ export class BattleScene {
         sprite.position.set(x, y);
         sprite.width = size;
         sprite.height = size;
-        this.world.addChild(sprite);
+        this.background.addChild(sprite);
       };
       for (const x of [56, 120, 184]) decoration('horizontal', x, 8);
       decoration('horizontal-cannon', 128, 8);
@@ -156,6 +162,21 @@ export class BattleScene {
       decoration('moss-stone', 768, 568, 88);
       decoration('rock', -8, 8, 72);
     }
+  }
+  prepareBackground(renderer: Renderer, width: number, height: number) {
+    // Measured static shore masks/tile draws are flattened once per renderer.
+    // This texture belongs to the session; source atlas textures stay shared.
+    const cached = renderer.generateTexture({
+      target: this.background,
+      frame: new Rectangle(0, 0, width, height),
+      resolution: 2,
+    });
+    this.backgroundSprite?.destroy();
+    this.backgroundTexture?.destroy(true);
+    this.backgroundTexture = cached;
+    this.background.removeFromParent();
+    this.backgroundSprite = new Sprite(cached);
+    this.world.addChildAt(this.backgroundSprite, 0);
   }
   private texture(name: string): Texture {
     const texture = this.assets.ships.get(name);
@@ -332,6 +353,7 @@ export class BattleScene {
   }
   observe() {
     return {
+      backgroundTextures: Number(this.backgroundTexture !== null),
       ships: this.ships.size,
       projectiles: this.balls.size,
       effects: this.effects.length,
@@ -341,6 +363,10 @@ export class BattleScene {
     this.world.removeFromParent();
     this.overlays.removeFromParent();
     this.world.destroy({ children: true });
+    this.backgroundTexture?.destroy(true);
+    this.backgroundTexture = null;
+    this.backgroundSprite = null;
+    if (!this.background.destroyed) this.background.destroy({ children: true });
     this.overlays.destroy({ children: true });
     this.ships.clear();
     this.balls.clear();

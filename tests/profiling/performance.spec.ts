@@ -47,6 +47,8 @@ test('P01 real 180-active-second optimized combat profile', async ({
     await page.request.get('/build-info.json')
   ).json()) as unknown;
   await play(page);
+  const focus = await page.context().newCDPSession(page);
+  await focus.send('Emulation.setFocusEmulationEnabled', { enabled: true });
   const hardware = await page.evaluate(() => {
     const canvas = document.querySelector('canvas')!;
     const gl = (canvas.getContext('webgl2') ??
@@ -78,6 +80,7 @@ test('P01 real 180-active-second optimized combat profile', async ({
     if (!state) break;
     if (state.hud.state === 'paused') {
       pauses++;
+      await pilot.release();
       await page.getByRole('button', { name: 'Resume', exact: true }).click();
     } else if (state.hud.state === 'reflowing') reflows++;
     else await pilot.apply(pilotInput(state, config));
@@ -112,7 +115,7 @@ test('P01 real 180-active-second optimized combat profile', async ({
     rulesetId: await rulesetId(config),
     seed: 42,
     protocol:
-      'Stationary lead-aim pilot; genuine keyboard front/left/right and turns; poll every 25 ms plus IPC; no outcome assignment.',
+      'Stationary lead-aim pilot; genuine keyboard front/left/right and turns; poll every 25 ms plus IPC. Diagnostic focus emulation keeps the hardware sample active; native focus behavior is verified separately. A pause releases/represses keys; no outcome assignment.',
     elapsed: final.elapsed,
     endReason: final.endReason,
     score: final.score,
@@ -150,6 +153,8 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
   const protocol = await context.newCDPSession(page);
   await protocol.send('HeapProfiler.enable');
   const samples: unknown[] = [];
+  let ownerNames: Record<string, string | null> = {};
+
   for (let cycle = 0; cycle < 5; cycle++) {
     // Keep the same document after warmup; a reload would hide retained owners.
     if (cycle === 0) await play(page, 180);
@@ -165,14 +170,35 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
         window.profileRead = window.pirateBattle.observe;
       });
     }
+    await protocol.send('Emulation.setFocusEmulationEnabled', {
+      enabled: true,
+    });
     await page.keyboard.down('w');
     await page.keyboard.down(' ');
     await page.keyboard.down('q');
-    await page.waitForTimeout(8000);
+    const until = Date.now() + 30000;
+    while (
+      Date.now() < until &&
+      (await page.evaluate(() => window.pirateBattle?.observe().elapsed ?? 8)) <
+        8
+    ) {
+      const state = await page.evaluate(
+        () => window.pirateBattle?.observe().hud.state,
+      );
+      if (state === 'paused') {
+        await page.getByRole('button', { name: 'Resume', exact: true }).click();
+        await page.keyboard.down('w');
+        await page.keyboard.down(' ');
+        await page.keyboard.down('q');
+      }
+      await page.waitForTimeout(100);
+    }
     await page.keyboard.up('w');
     await page.keyboard.up(' ');
     await page.keyboard.up('q');
     const active = await page.evaluate(() => window.pirateBattle?.observe());
+    ownerNames = active?.resources.classNames ?? {};
+    expect(active?.elapsed).toBeGreaterThanOrEqual(8);
     await page.getByRole('button', { name: 'Pause', exact: true }).click();
     await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
     await page
@@ -216,15 +242,15 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
       dom,
       windowListeners: listeners.result.value as unknown,
     });
+    await report('resources-partial', { browser: browser.version(), samples });
   }
-  // Count reachable detached renderers/canvases/tickers in a final genuine heap snapshot.
   const chunks: string[] = [];
-  protocol.on('HeapProfiler.addHeapSnapshotChunk', (event) =>
-    chunks.push(event.chunk),
-  );
+  const receive = (event: { chunk: string }) => chunks.push(event.chunk);
+  protocol.on('HeapProfiler.addHeapSnapshotChunk', receive);
   await protocol.send('HeapProfiler.takeHeapSnapshot', {
     reportProgress: false,
   });
+  protocol.off('HeapProfiler.addHeapSnapshotChunk', receive);
   const heap = JSON.parse(chunks.join('')) as {
     snapshot: { meta: { node_fields: string[]; node_types: unknown[] } };
     nodes: number[];
@@ -233,25 +259,53 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
   const fields = heap.snapshot.meta.node_fields,
     stride = fields.length,
     nameIndex = fields.indexOf('name'),
-    typeIndex = fields.indexOf('type');
+    typeIndex = fields.indexOf('type'),
+    sizeIndex = fields.indexOf('self_size');
   const nodeTypes = heap.snapshot.meta.node_types[0] as string[],
-    counts: Record<string, number> = {};
+    counts: Record<string, number> = {},
+    totals: Record<string, { count: number; bytes: number }> = {};
   for (let i = 0; i < heap.nodes.length; i += stride) {
     const name = heap.strings[heap.nodes[i + nameIndex] ?? 0] ?? '',
-      type = nodeTypes[heap.nodes[i + typeIndex] ?? 0];
+      type = nodeTypes[heap.nodes[i + typeIndex] ?? 0] ?? 'unknown',
+      size = heap.nodes[i + sizeIndex] ?? 0;
+    const key = type === 'object' || type === 'native' ? name : type;
+    const total = totals[key] ?? { count: 0, bytes: 0 };
+    total.count++;
+    total.bytes += size;
+    totals[key] = total;
     if (
       (type === 'object' || type === 'native') &&
-      /HTMLCanvasElement|WebGLRenderingContext|WebGL2RenderingContext|ResizeObserver|AudioBufferSourceNode|AudioContext|Detached/.test(
+      /^(?:HTMLCanvasElement|WebGLRenderingContext|WebGL2RenderingContext|ResizeObserver|AudioBufferSourceNode|AudioContext)$/.test(
         name,
       )
     )
       counts[name] = (counts[name] ?? 0) + 1;
   }
   chunks.length = 0;
+  const retainedOwnerObjects = Object.fromEntries(
+    Object.entries(ownerNames)
+      .filter(
+        (entry): entry is [string, string] => typeof entry[1] === 'string',
+      )
+      .map(([role, name]) => [
+        role,
+        {
+          name,
+          count: totals[name]?.count ?? 0,
+          bytes: totals[name]?.bytes ?? 0,
+        },
+      ]),
+  );
+  const largestReachableCategories = Object.entries(totals)
+    .sort((a, b) => b[1].bytes - a[1].bytes)
+    .slice(0, 25)
+    .map(([name, values]) => ({ name, ...values }));
   const result = {
     browser: browser.version(),
     samples,
     finalReachableObjects: counts,
+    largestReachableCategories,
+    retainedOwnerObjects,
     method:
       'Same document, same 8 s movement/firing and UI abandonment; cleanup observation then release diagnostic owner and force GC at each point. Final heap object counts supplement actual owner/canvas/listener/ticker/audio checks. Shared assets, one audio context/buffers and library pools are intentional.',
   };

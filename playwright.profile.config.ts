@@ -3,6 +3,10 @@ const port = Number(process.env.E2E_PORT ?? 4175);
 const baseURL = `http://127.0.0.1:${port}`;
 export default defineConfig({
   testDir: './tests/profiling',
+  testMatch:
+    process.env.PROFILE_RENDER_COST === '1'
+      ? '**/render-cost.spec.ts'
+      : '**/performance.spec.ts',
   workers: 1,
   timeout: 300000,
   retries: 0,
@@ -15,7 +19,17 @@ export default defineConfig({
     ...devices['Desktop Chrome'],
     viewport: { width: 1440, height: 900 },
     deviceScaleFactor: 1,
-    headless: false,
+    headless: process.env.PROFILE_SOFTWARE === '1',
+    launchOptions: {
+      args:
+        process.env.PROFILE_VULKAN === '1'
+          ? [
+              '--use-angle=vulkan',
+              '--enable-features=Vulkan',
+              '--disable-vulkan-surface',
+            ]
+          : [],
+    },
     baseURL,
     trace: 'off',
     locale: 'en-US',
