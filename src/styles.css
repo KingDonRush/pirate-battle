@@ -640,11 +640,23 @@ kbd {
   transform: rotate(40deg);
 }
 .control-hint {
-  font-size: 11px;
+  font-size: 14px;
+  line-height: 1.25;
+  min-width: 0;
+  white-space: nowrap;
   font-weight: 800;
   text-align: center;
   align-self: center;
   color: #e4ddc6;
+  text-shadow:
+    -1px -1px #08232e,
+    0 -1px #08232e,
+    1px -1px #08232e,
+    -1px 0 #08232e,
+    1px 0 #08232e,
+    -1px 1px #08232e,
+    0 1px #08232e,
+    1px 1px #08232e;
 }
 .reflow-notice,
 .sound-notice {
@@ -1021,7 +1033,7 @@ progress {
     padding: 9px;
   }
   .control-hint {
-    font-size: 11px;
+    font-size: 14px;
   }
   .arena-viewport {
     position: relative;
