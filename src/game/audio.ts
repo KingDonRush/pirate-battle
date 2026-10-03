@@ -42,6 +42,7 @@ export class AudioService {
   private ocean: GainNode | null = null;
   private sailing: GainNode | null = null;
   private owner: string | null = null;
+  private terminalOwner: string | null = null;
   private generation = 0;
   private loading: Promise<void> | null = null;
   private abort = new AbortController();
@@ -135,6 +136,7 @@ export class AudioService {
       this.voices.delete(source);
       source.disconnect();
       gain.disconnect();
+      if (!this.owner && this.voices.size === 0) this.pause();
     };
     source.start();
     return gain;
@@ -169,15 +171,32 @@ export class AudioService {
         : 1;
     this.source(kind, owner, false, priority);
   }
-  result(reason: 'time' | 'death') {
+  ending(owner: string, reason: 'time' | 'death') {
+    this.stop(owner);
+    const token = 'ending:' + owner;
+    this.terminalOwner = token;
     if (this.settings.muted) return;
     void this.context
       ?.resume()
       .then(() => {
-        if (!this.disposed)
-          this.source(reason === 'time' ? 'complete' : 'death', null, false, 4);
+        if (
+          this.disposed ||
+          this.terminalOwner !== token ||
+          this.settings.muted
+        )
+          return;
+        this.source(reason === 'time' ? 'complete' : 'death', token, false, 4);
       })
-      .catch(() => {});
+      .catch(() => {
+        this.error = 'Sound is unavailable. You can keep playing.';
+      });
+  }
+  cancelEnding(owner?: string) {
+    if (owner && this.terminalOwner !== 'ending:' + owner) return;
+    for (const [source, voice] of this.voices)
+      if (voice.owner === this.terminalOwner) this.remove(source, voice);
+    this.terminalOwner = null;
+    if (!this.owner) this.pause();
   }
   update(settings: Settings) {
     this.settings = settings;
@@ -216,6 +235,7 @@ export class AudioService {
   stop(owner?: string) {
     if (owner && owner !== this.owner) return;
     this.generation++;
+    if (!owner) this.terminalOwner = null;
     for (const [source, voice] of this.voices)
       if (!owner || voice.owner === owner) this.remove(source, voice);
     this.owner = null;
@@ -229,6 +249,9 @@ export class AudioService {
       voices: this.voices.size,
       buffers: this.buffers.size,
       loops: [...this.voices.values()].filter((v) => v.loop).length,
+      terminalVoices: [...this.voices.values()].filter(
+        (v) => v.owner === this.terminalOwner && !v.loop,
+      ).length,
       state: this.context?.state,
     };
   }

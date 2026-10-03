@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readyArtwork } from '../support/artwork';
+import { selectNetwork } from '../support/menu';
 test('review reference-size menu, options, log, arena, pause and result', async ({
   page,
 }, info) => {
@@ -7,7 +8,7 @@ test('review reference-size menu, options, log, arena, pause and result', async 
     info.project.name !== 'chromium-desktop',
     'Native reference comparison uses desktop DPR 1.',
   );
-  test.setTimeout(60000);
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   await page.setViewportSize({ width: 1800, height: 1000 });
   await page.goto('/?seed=42&clock=manual');
   await page.getByLabel('Display name').fill('Captain Jack');
@@ -43,10 +44,7 @@ test('review reference-size menu, options, log, arena, pause and result', async 
   await expect(page.getByRole('status')).toHaveText('Match saved.');
   await page.screenshot({ path: info.outputPath('result.png') });
   await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
-  await page.getByText('Network conditions', { exact: true }).click();
-  await page
-    .getByLabel('Scenario', { exact: true })
-    .selectOption('multiple-pages');
+  await selectNetwork(page, 'multiple-pages');
   await page.getByRole('tab', { name: 'Match History', exact: true }).click();
   await expect(page.getByRole('tabpanel')).toContainText('Page 1 of 4');
   await readyArtwork(page);

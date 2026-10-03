@@ -6,6 +6,8 @@ export type Settings = Readonly<{
   ambienceVolume: number;
   muted: boolean;
   reducedMotion: boolean;
+  controlMode: 'direction' | 'rudder';
+  mirrorControls: boolean;
 }>;
 
 export const DEFAULT_SETTINGS: Settings = Object.freeze({
@@ -16,12 +18,15 @@ export const DEFAULT_SETTINGS: Settings = Object.freeze({
   ambienceVolume: 0.35,
   muted: false,
   reducedMotion: false,
+  controlMode: 'direction',
+  mirrorControls: false,
 });
 
 export type LevelDefinition = Readonly<{
   width: number;
   height: number;
   version: string;
+  boundsPolicy?: 'viewport';
   islands: readonly Readonly<{
     x: number;
     y: number;
@@ -33,14 +38,14 @@ export type LevelDefinition = Readonly<{
 export const LEVEL: LevelDefinition = Object.freeze({
   width: 1152,
   height: 640,
-  version: 'reference-v2',
+  version: 'archipelago-v3',
+  boundsPolicy: 'viewport',
   islands: Object.freeze(
     [
-      { x: 0, y: -64, width: 608, height: 220, radius: 32 },
-      { x: 128, y: 80, width: 320, height: 240, radius: 32 },
-      { x: 368, y: 480, width: 408, height: 240, radius: 32 },
-      { x: 848, y: 396, width: 304, height: 324, radius: 32 },
-      { x: 736, y: 560, width: 160, height: 160, radius: 24 },
+      { x: 32, y: 24, width: 352, height: 288, radius: 56 },
+      { x: 880, y: 48, width: 216, height: 168, radius: 52 },
+      { x: 160, y: 488, width: 184, height: 128, radius: 44 },
+      { x: 816, y: 416, width: 304, height: 200, radius: 56 },
     ].map((island) => Object.freeze(island)),
   ),
 });
@@ -58,7 +63,7 @@ export type EnemyConfig = Readonly<{
   range: number;
 }>;
 export type MatchConfig = Readonly<{
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   level: LevelDefinition;
   duration: number;
   spawnInterval: number;
@@ -91,7 +96,7 @@ export type MatchConfig = Readonly<{
 
 export function createConfig(settings: Settings): MatchConfig {
   return Object.freeze({
-    version: 2,
+    version: 3,
     level: LEVEL,
     duration: settings.duration,
     spawnInterval: settings.spawnInterval,
@@ -152,7 +157,7 @@ export function createConfig(settings: Settings): MatchConfig {
       distribution: Object.freeze(['chaser', 'shooter'] as const),
     }),
     chaserImpact: 25,
-    hull: Object.freeze({ radius: 28.8, halfLength: 33.6, boundaryMargin: 40 }),
+    hull: Object.freeze({ radius: 28.8, halfLength: 33.6, boundaryMargin: 0 }),
   });
 }
 
@@ -200,6 +205,8 @@ export function readSettings(): Settings {
       ambienceVolume: volume('ambienceVolume', 0.35),
       muted: v.muted === true,
       reducedMotion: v.reducedMotion === true,
+      controlMode: v.controlMode === 'rudder' ? 'rudder' : 'direction',
+      mirrorControls: v.mirrorControls === true,
     };
   } catch {
     return DEFAULT_SETTINGS;

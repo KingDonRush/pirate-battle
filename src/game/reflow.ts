@@ -1,4 +1,5 @@
-import { LEVEL } from './config';
+import { LEVEL, type LevelDefinition } from './config';
+import type { Rect, Point } from './geometry';
 export type ViewTransform = Readonly<{
   x: number;
   y: number;
@@ -6,28 +7,55 @@ export type ViewTransform = Readonly<{
   angle: number;
   width: number;
   height: number;
+  originX: number;
+  originY: number;
+  bounds: Readonly<Rect>;
 }>;
 export function fitWorld(
   width: number,
   height: number,
   angle: number,
+  level: LevelDefinition = LEVEL,
+  coverage: readonly Point[] = [],
 ): ViewTransform {
+  const originX = level.width / 2,
+    originY = level.height / 2;
+  const extentX = Math.max(
+    originX,
+    ...coverage.map((point) => Math.abs(point.x - originX) + 72),
+  );
+  const extentY = Math.max(
+    originY,
+    ...coverage.map((point) => Math.abs(point.y - originY) + 72),
+  );
   const c = Math.abs(Math.cos(angle)),
     s = Math.abs(Math.sin(angle));
-  const worldWidth = c * LEVEL.width + s * LEVEL.height,
-    worldHeight = s * LEVEL.width + c * LEVEL.height;
+  const scale = Math.min(
+    width / (2 * extentX * c + 2 * extentY * s),
+    height / (2 * extentY * c + 2 * extentX * s),
+  );
+  const worldWidth = (width * c + height * s) / scale,
+    worldHeight = (height * c + width * s) / scale;
   return Object.freeze({
     x: width / 2,
     y: height / 2,
-    scale: Math.min(width / worldWidth, height / worldHeight),
+    scale,
     angle,
     width,
     height,
+    originX,
+    originY,
+    bounds: Object.freeze({
+      x: originX - worldWidth / 2,
+      y: originY - worldHeight / 2,
+      width: worldWidth,
+      height: worldHeight,
+    }),
   });
 }
 export function worldToView(x: number, y: number, view: ViewTransform) {
-  const dx = x - LEVEL.width / 2,
-    dy = y - LEVEL.height / 2,
+  const dx = x - view.originX,
+    dy = y - view.originY,
     c = Math.cos(view.angle),
     s = Math.sin(view.angle);
   return {
@@ -41,14 +69,11 @@ export function viewToWorld(x: number, y: number, view: ViewTransform) {
     c = Math.cos(view.angle),
     s = Math.sin(view.angle);
   return {
-    x: LEVEL.width / 2 + dx * c + dy * s,
-    y: LEVEL.height / 2 - dx * s + dy * c,
+    x: view.originX + dx * c + dy * s,
+    y: view.originY - dx * s + dy * c,
   };
 }
 export class ReflowCoordinator {
-  setReducedMotion(value: boolean) {
-    this.reducedMotion = value;
-  }
   revision = 0;
   active = true;
   private measuredAt = 0;
@@ -57,26 +82,51 @@ export class ReflowCoordinator {
   private targetAngle = 0;
   private width = 1;
   private height = 1;
+  private coverage: readonly Point[] = [];
   private view: ViewTransform = fitWorld(1, 1, 0);
   private reducedMotion: boolean;
   private freeze: () => void;
   private ready: () => void;
-  constructor(reducedMotion: boolean, freeze: () => void, ready: () => void) {
+  private level: LevelDefinition;
+  constructor(
+    reducedMotion: boolean,
+    freeze: () => void,
+    ready: () => void,
+    level: LevelDefinition = LEVEL,
+  ) {
     this.reducedMotion = reducedMotion;
     this.freeze = freeze;
     this.ready = ready;
+    this.level = level;
   }
-  request(width: number, height: number, portrait: boolean, now: number) {
-    if (width <= 0 || height <= 0) {
+  setReducedMotion(value: boolean) {
+    this.reducedMotion = value;
+  }
+  request(
+    width: number,
+    height: number,
+    angle: number,
+    now: number,
+    coverage: readonly Point[] = [],
+  ) {
+    if (
+      ![width, height, angle].every(Number.isFinite) ||
+      width <= 0 ||
+      height <= 0
+    ) {
       this.active = true;
       this.freeze();
       return;
     }
-    const angle = portrait ? Math.PI / 2 : 0;
     if (
       Math.abs(width - this.width) < 0.5 &&
       Math.abs(height - this.height) < 0.5 &&
-      angle === this.targetAngle &&
+      Math.abs(
+        Math.atan2(
+          Math.sin(angle - this.targetAngle),
+          Math.cos(angle - this.targetAngle),
+        ),
+      ) < 1e-8 &&
       this.revision > 0
     )
       return;
@@ -84,9 +134,13 @@ export class ReflowCoordinator {
     this.width = width;
     this.height = height;
     this.startAngle = this.view.angle;
-    this.targetAngle = angle;
+    let delta = angle - this.startAngle;
+    while (delta > Math.PI) delta -= Math.PI * 2;
+    while (delta < -Math.PI) delta += Math.PI * 2;
+    this.targetAngle = this.startAngle + delta;
     this.measuredAt = now;
     this.stableFrames = 0;
+    this.coverage = coverage;
     this.active = true;
     this.freeze();
   }
@@ -96,21 +150,23 @@ export class ReflowCoordinator {
       duration === 0
         ? 1
         : Math.min(1, Math.max(0, (now - this.measuredAt) / duration));
-    const eased = 1 - Math.pow(1 - fraction, 3);
     this.view = fitWorld(
       this.width,
       this.height,
-      this.startAngle + (this.targetAngle - this.startAngle) * eased,
+      this.startAngle +
+        (this.targetAngle - this.startAngle) * (1 - (1 - fraction) ** 3),
+      this.level,
+      this.coverage,
     );
     return this.view;
   }
-  afterRender(now: number, latestWidth: number, latestHeight: number) {
+  afterRender(now: number, width: number, height: number) {
     if (!this.active || this.revision === 0) return;
     const valid =
       Number.isFinite(this.view.scale) &&
       this.view.scale > 0 &&
-      Math.abs(latestWidth - this.width) < 0.5 &&
-      Math.abs(latestHeight - this.height) < 0.5 &&
+      Math.abs(width - this.width) < 0.5 &&
+      Math.abs(height - this.height) < 0.5 &&
       Math.abs(this.view.angle - this.targetAngle) < 0.0001;
     this.stableFrames = valid ? this.stableFrames + 1 : 0;
     if (this.stableFrames >= 2 && now - this.measuredAt >= 100) {

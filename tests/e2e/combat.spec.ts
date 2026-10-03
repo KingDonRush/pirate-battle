@@ -259,7 +259,7 @@ test('G01 paused Options changes the next match without replacing active world',
   const paused = await world(page);
   await page.getByRole('button', { name: 'Options', exact: true }).click();
   await page.getByLabel('Game session time', { exact: true }).fill('180');
-  await page.getByText('Sound and motion', { exact: true }).click();
+  await page.getByRole('tab', { name: 'Accessibility', exact: true }).click();
   await page.getByLabel('Reduce motion').check();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   const unchanged = await world(page);
@@ -281,9 +281,9 @@ test('G04 projectile lifetime consumes a bounded shot on the open-water route', 
   });
   for (const [ticks, forward, turn] of [
     [60, false, 1],
-    [18, true, 0],
+    [12, true, 0],
     [30, false, 1],
-    [162, true, 0],
+    [120, true, 0],
     [60, false, 1],
   ] as const)
     for (let i = 0; i < ticks; i++)

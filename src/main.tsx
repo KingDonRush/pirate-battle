@@ -10,12 +10,13 @@ import { closeDatabase } from './data/database';
 
 const queryClient = new QueryClient();
 
-async function bootstrap() {
+function bootstrap() {
   const root = document.getElementById('root');
   if (!root) throw new Error('Application root is missing.');
 
-  const { startMockWorker } = await import('./mocks/browser');
-  void startMockWorker().catch(() => {});
+  void import('./mocks/browser')
+    .then(({ startMockWorker }) => startMockWorker())
+    .catch(() => {});
   const audio = new AudioService(readSettings());
   const submissions = new SubmissionService(queryClient);
   submissions.start();
@@ -35,11 +36,13 @@ async function bootstrap() {
   );
 }
 
-void bootstrap().catch((error: unknown) => {
+try {
+  bootstrap();
+} catch (error: unknown) {
   console.error('Application startup failed.', error);
   const root = document.getElementById('root');
   if (root) {
     root.textContent = 'The application could not start. Reload to try again.';
     root.setAttribute('role', 'alert');
   }
-});
+}

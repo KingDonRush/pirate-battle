@@ -8,6 +8,7 @@ import {
 import { loadGameAssets } from '../game/assets';
 import type { AudioService } from '../game/audio';
 import type { Action } from '../game/input';
+import type { Settings } from '../game/config';
 import { GameRuntime, type CompletedLocalMatch } from '../game/runtime';
 import type { MatchSession } from '../game/simulation';
 import { Dialog } from './Dialog';
@@ -43,10 +44,10 @@ function Control({
   icon: string;
   diagonal?: boolean;
 }) {
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(
     () => () => {
-      for (const timer of timers.current) clearTimeout(timer);
+      clearTimeout(timer.current);
     },
     [],
   );
@@ -74,8 +75,12 @@ function Control({
       onClick={(event) => {
         if (event.detail !== 0) return;
         const id = 'activation:' + label;
+        clearTimeout(timer.current);
         runtime.input.press(id, actions);
-        timers.current.push(setTimeout(() => runtime.input.release(id), 120));
+        timer.current = setTimeout(() => {
+          runtime.input.release(id);
+          timer.current = undefined;
+        }, 120);
       }}
     >
       <img src={icon} alt="" draggable={false} />
@@ -231,6 +236,14 @@ function Battle({
           Adjusting arena…
         </div>
       ) : null}
+      {hud.state === 'ending' ? (
+        <div
+          className={'ending-overlay ' + runtime.simulation.endReason}
+          role="status"
+        >
+          {runtime.simulation.endReason === 'death' ? 'Defeated' : 'Time up'}
+        </div>
+      ) : null}
       {hud.audioError ? (
         <p className="sound-notice" role="status">
           {hud.audioError}{' '}
@@ -250,7 +263,7 @@ function Battle({
             : ''}
       </p>
       {hud.state === 'paused' && !confirm && !editingOptions ? (
-        <Dialog title="Paused">
+        <Dialog title="Paused" onCancel={() => runtime.resume()}>
           <p>{hud.reason === 'Paused' ? 'Ready when you are.' : hud.reason}</p>
           <div className="stack">
             <button
@@ -300,18 +313,47 @@ export function GameScreen({
   reducedMotion,
   onExit,
   onFinish,
+  onCompleted,
   options,
+  preferences,
 }: {
   session: MatchSession;
   audio: AudioService;
   reducedMotion: boolean;
   onExit: () => void;
   onFinish: (result: CompletedLocalMatch) => void;
+  onCompleted: (result: CompletedLocalMatch) => void;
   options: (close: () => void) => ReactNode;
+  preferences: Settings;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const motion = useRef(reducedMotion);
   const [runtime, setRuntime] = useState<GameRuntime | null>(null);
+  const pointer = useRef<{ id: number; x: number; y: number } | null>(null);
+  const [stick, setStick] = useState<{
+    x: number;
+    y: number;
+    dx: number;
+    dy: number;
+  } | null>(null);
+  const clearStick = () => {
+    if (pointer.current) runtime?.input.release('stick:' + pointer.current.id);
+    pointer.current = null;
+    setStick(null);
+  };
+  useEffect(() => {
+    if (!runtime) return;
+    const clear = () => {
+      if (runtime.getSnapshot().state !== 'running') {
+        if (pointer.current)
+          runtime.input.release('stick:' + pointer.current.id);
+        pointer.current = null;
+        setStick(null);
+      }
+    };
+    const unsubscribe = runtime.subscribe(clear);
+    return unsubscribe;
+  }, [runtime]);
   const [progress, setProgress] = useState(0),
     [error, setError] = useState<{ message: string; reload: boolean } | null>(
       null,
@@ -338,6 +380,7 @@ export function GameScreen({
           audio,
           motion.current,
           onFinish,
+          onCompleted,
         );
         await owned.init();
         if (obsolete) {
@@ -368,16 +411,115 @@ export function GameScreen({
         delete window.pirateBattle;
       owned?.dispose();
     };
-  }, [session, audio, onFinish, attempt]);
+  }, [session, audio, onFinish, onCompleted, attempt]);
   return (
-    <main className="game-shell">
+    <main
+      className="game-shell"
+      data-touch={navigator.maxTouchPoints > 0}
+      data-mirror={preferences.mirrorControls}
+      data-reduced={reducedMotion}
+    >
       <img className="battle-brand" src={logoUrl} alt="Jungle Gaming" />
       <div
         ref={host}
         className="arena-viewport"
         tabIndex={0}
         aria-label="Battle arena. W to move, A and D to turn. Space, Q and E to fire. Escape to pause."
+        onPointerDown={(event) => {
+          if (
+            !runtime ||
+            runtime.getSnapshot().state !== 'running' ||
+            pointer.current ||
+            event.pointerType === 'mouse'
+          )
+            return;
+          const hud = event.currentTarget.parentElement?.querySelectorAll(
+            '.battle-hud, .battle-hud .captain',
+          );
+          if (
+            hud &&
+            [...hud].some((element) => {
+              const bounds = element.getBoundingClientRect();
+              return (
+                event.clientX >= bounds.left &&
+                event.clientX <= bounds.right &&
+                event.clientY >= bounds.top &&
+                event.clientY <= bounds.bottom
+              );
+            })
+          )
+            return;
+          event.preventDefault();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          const bounds = event.currentTarget.getBoundingClientRect();
+          pointer.current = {
+            id: event.pointerId,
+            x: event.clientX,
+            y: event.clientY,
+          };
+          setStick({
+            x: Math.max(
+              48,
+              Math.min(bounds.width - 48, event.clientX - bounds.left),
+            ),
+            y: Math.max(
+              48,
+              Math.min(bounds.height - 48, event.clientY - bounds.top),
+            ),
+            dx: 0,
+            dy: 0,
+          });
+        }}
+        onPointerMove={(event) => {
+          if (
+            !runtime ||
+            !pointer.current ||
+            pointer.current.id !== event.pointerId
+          )
+            return;
+          const dx = (event.clientX - pointer.current.x) / 48,
+            dy = (event.clientY - pointer.current.y) / 48;
+          const length = Math.max(1, Math.hypot(dx, dy));
+          runtime.steer(
+            'stick:' + event.pointerId,
+            dx / length,
+            dy / length,
+            preferences.controlMode,
+          );
+          setStick((value) =>
+            value
+              ? { ...value, dx: (dx / length) * 26, dy: (dy / length) * 26 }
+              : null,
+          );
+        }}
+        onPointerUp={(event) => {
+          if (pointer.current?.id === event.pointerId) clearStick();
+        }}
+        onPointerCancel={(event) => {
+          if (pointer.current?.id === event.pointerId) clearStick();
+        }}
+        onLostPointerCapture={(event) => {
+          if (pointer.current?.id === event.pointerId) clearStick();
+        }}
       />
+      {stick ? (
+        <div
+          className="virtual-stick"
+          aria-hidden="true"
+          style={{ left: stick.x - 48, top: stick.y - 48 }}
+        >
+          <div
+            className="virtual-stick-knob"
+            style={{ transform: `translate(${stick.dx}px, ${stick.dy}px)` }}
+          />
+        </div>
+      ) : runtime && navigator.maxTouchPoints > 0 ? (
+        <div className="stick-hint">
+          Touch &amp; drag
+          <br />
+          to steer
+        </div>
+      ) : null}
       {runtime ? (
         <Battle runtime={runtime} onExit={onExit} options={options} />
       ) : (

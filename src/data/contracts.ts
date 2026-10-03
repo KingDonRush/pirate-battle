@@ -79,12 +79,14 @@ export function decodeConfig(value: unknown): MatchConfig {
     spawn = object(v.spawn),
     level = object(v.level);
   if (
-    (v.version !== 1 && v.version !== 2) ||
+    (v.version !== 1 && v.version !== 2 && v.version !== 3) ||
     !Array.isArray(level.islands) ||
     level.islands.length < 1 ||
     level.islands.length > 32
   )
     throw new Error('Unsupported match configuration.');
+  if (level.boundsPolicy !== undefined && level.boundsPolicy !== 'viewport')
+    throw new Error('Invalid arena policy.');
   const duration = integer(v.duration, 60, 180),
     spawnInterval = number(v.spawnInterval, 0.75, 10);
   if (validateOptions(duration, spawnInterval))
@@ -136,6 +138,9 @@ export function decodeConfig(value: unknown): MatchConfig {
       width,
       height,
       islands: Object.freeze(islands),
+      ...(level.boundsPolicy === 'viewport'
+        ? { boundsPolicy: 'viewport' as const }
+        : {}),
     }),
     player: Object.freeze({
       health: number(player.health, 1),

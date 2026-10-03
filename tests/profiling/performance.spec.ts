@@ -15,7 +15,7 @@ declare global {
   }
 }
 async function play(page: Page, duration = 180) {
-  await page.goto('/?seed=42');
+  await page.goto('/?seed=38');
   await page.getByRole('button', { name: 'Options', exact: true }).click();
   await page
     .getByLabel('Game session time', { exact: true })
@@ -117,7 +117,7 @@ test('P01 real 180-active-second optimized combat profile', async ({
     },
     config,
     rulesetId: await rulesetId(config),
-    seed: 42,
+    seed: 38,
     protocol:
       'Stationary lead-aim pilot; genuine keyboard front/left/right and turns; poll every 25 ms plus IPC. Diagnostic focus emulation keeps the hardware sample active; native focus behavior is verified separately. A pause releases/represses keys; no outcome assignment. Test-browser audio output is muted; real Web Audio nodes/mixing still run.',
     elapsed: final.elapsed,
@@ -275,7 +275,7 @@ test('P02 five comparable play/exit resource and reachable-heap cycles', async (
       cpu: os.cpus()[0]?.model,
     },
     config: createConfig({ ...DEFAULT_SETTINGS, duration: 180 }),
-    seed: 42,
+    seed: 38,
     samples,
     portCounts,
     method:

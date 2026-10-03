@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 const sizes = [
   [1280, 720],
   [1440, 900],
+  [1366, 625],
   [768, 1024],
   [1024, 768],
   [320, 568],
@@ -11,7 +12,7 @@ const sizes = [
   [667, 375],
   [844, 390],
 ] as const;
-for (const dpr of [1, 2, 3]) {
+for (const dpr of [1, 1.25, 1.5, 2, 3]) {
   test(
     'G09 complete arena, long name and controls at DPR ' + dpr,
     async ({ browser }, info) => {
@@ -56,7 +57,9 @@ for (const dpr of [1, 2, 3]) {
               ...document.querySelectorAll(
                 '.controls button,.battle-hud,.captain',
               ),
-            ].map((element) => element.getBoundingClientRect());
+            ]
+              .map((element) => element.getBoundingClientRect())
+              .filter((rect) => rect.width > 0);
             const canvas = document.querySelector('canvas')!;
             const view = window.pirateBattle!.observe().view!;
             const corners = [
@@ -87,10 +90,10 @@ for (const dpr of [1, 2, 3]) {
                   r.right <= innerWidth + 0.5 &&
                   r.bottom <= innerHeight + 0.5,
               ),
-              touch: [...document.querySelectorAll('.controls button')].every(
+              touch: [...document.querySelectorAll('.weapons button')].every(
                 (element) => {
                   const r = element.getBoundingClientRect();
-                  return r.width >= 48 && r.height >= 48;
+                  return r.width >= 56 && r.height >= 56;
                 },
               ),
               fitted: corners.every(
@@ -102,6 +105,9 @@ for (const dpr of [1, 2, 3]) {
               ),
               resolution:
                 Math.abs(canvas.width / arena.width - devicePixelRatio) < 0.01,
+              hudAtTop:
+                document.querySelector('.battle-hud')!.getBoundingClientRect()
+                  .bottom < 120,
             };
           });
           expect(state, {
@@ -112,6 +118,7 @@ for (const dpr of [1, 2, 3]) {
             touch: true,
             fitted: true,
             resolution: true,
+            hudAtTop: true,
           });
         }
         await page.screenshot({

@@ -19,7 +19,7 @@ export default defineConfig({
   outputDir: 'artifacts/profiling/results',
   use: {
     ...devices['Desktop Chrome'],
-    viewport: { width: 1440, height: 900 },
+    viewport: { width: 1800, height: 1000 },
     deviceScaleFactor: 1,
     headless: process.env.PROFILE_SOFTWARE === '1',
     launchOptions: {

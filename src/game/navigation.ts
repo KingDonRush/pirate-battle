@@ -1,5 +1,11 @@
 import type { MatchConfig } from './config';
-import { canOccupy, castIsland, distance, type Point } from './geometry';
+import {
+  canOccupy,
+  castIsland,
+  distance,
+  type Point,
+  type Rect,
+} from './geometry';
 export function directPath(a: Point, b: Point, config: MatchConfig) {
   return config.level.islands.every(
     (island) =>
@@ -12,13 +18,19 @@ export function findPath(
   start: Point,
   goal: Point,
   config: MatchConfig,
+  bounds: Rect = {
+    x: 0,
+    y: 0,
+    width: config.level.width,
+    height: config.level.height,
+  },
 ): Point[] {
   const cell = 32,
-    columns = Math.floor(config.level.width / cell),
-    rows = Math.floor(config.level.height / cell);
+    columns = Math.floor(bounds.width / cell),
+    rows = Math.floor(bounds.height / cell);
   const point = (id: number) => ({
-    x: ((id % columns) + 0.5) * cell,
-    y: (Math.floor(id / columns) + 0.5) * cell,
+    x: bounds.x + ((id % columns) + 0.5) * cell,
+    y: bounds.y + (Math.floor(id / columns) + 0.5) * cell,
   });
   const free = (id: number) => {
     const p = point(id),
@@ -29,12 +41,12 @@ export function findPath(
     return (
       id >= 0 &&
       id < columns * rows &&
-      p.x >= margin &&
-      p.x <= config.level.width - margin &&
-      p.y >= margin &&
-      p.y <= config.level.height - margin &&
-      canOccupy(p, 0, config) &&
-      canOccupy(p, Math.PI / 2, config)
+      p.x >= bounds.x + margin &&
+      p.x <= bounds.x + bounds.width - margin &&
+      p.y >= bounds.y + margin &&
+      p.y <= bounds.y + bounds.height - margin &&
+      canOccupy(p, 0, config, bounds) &&
+      canOccupy(p, Math.PI / 2, config, bounds)
     );
   };
   const closest = (p: Point) => {

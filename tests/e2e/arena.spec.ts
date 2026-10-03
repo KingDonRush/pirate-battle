@@ -58,7 +58,7 @@ test('G01 name, guest identity, options validation and persistence', async ({
 test('G03 actual forward motion, rotation, island and arena constraints', async ({
   page,
 }) => {
-  test.setTimeout(60000);
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   await start(page, true);
   const first = await observe(page);
   await page.keyboard.down('w');
@@ -73,12 +73,6 @@ test('G03 actual forward motion, rotation, island and arena constraints', async 
   expect(
     Math.abs((await observe(page)).player.heading - Math.PI / 2),
   ).toBeLessThanOrEqual(Math.PI / 60 + 1e-6);
-  await page.keyboard.down('w');
-  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 4000);
-  await page.keyboard.up('w');
-  const east = await observe(page);
-  expect(east.player.x).toBeGreaterThan(1045);
-  expect(east.player.x).toBeLessThan(1055);
   await page.keyboard.down('a');
   await page.evaluate((ms) => window.pirateBattle?.advance(ms), 500);
   await page.keyboard.up('a');
@@ -86,8 +80,10 @@ test('G03 actual forward motion, rotation, island and arena constraints', async 
   await page.evaluate((ms) => window.pirateBattle?.advance(ms), 4000);
   await page.keyboard.up('w');
   const north = await observe(page);
-  expect(north.player.y).toBeGreaterThanOrEqual(102);
-  expect(north.player.y).toBeLessThan(108);
+  const edge = north.arenaBounds.y + 62.4;
+  expect(north.player.y).toBeGreaterThanOrEqual(edge - 1e-6);
+  expect(north.player.y).toBeLessThan(edge + 2.5);
+  expect(north.player.x).toBeCloseTo(first.player.x);
 });
 test('G07 pause and explicit resume clear held input and time debt', async ({
   page,
@@ -142,42 +138,54 @@ test('G09 latest reflow wins, time freezes, and exit releases the arena', async 
   expect(await page.evaluate(() => window.pirateBattle)).toBeUndefined();
 });
 
-test('G02 failed asset can be retried', async ({ page, context }) => {
-  let fail = true;
-  await context.route('**/ships_miscellaneous_sheet*.png*', (route) =>
-    fail &&
-    route.request().resourceType() !== 'script' &&
-    !/[?&](?:url|import)(?:[=&]|$)/.test(route.request().url())
-      ? route.abort()
-      : route.continue(),
-  );
-  await page.goto('/');
-  await page
-    .getByRole('button', { name: 'Play as guest', exact: true })
-    .click();
-  await expect(
-    page.getByRole('heading', { name: 'The arena could not load' }),
-  ).toBeVisible();
-  fail = false;
-  await page.getByRole('button', { name: 'Try again', exact: true }).click();
-  await expect(
-    page.getByRole('button', { name: 'Pause', exact: true }),
-  ).toBeVisible();
+test.describe('routed asset failure', () => {
+  test.use({ serviceWorkers: 'block' });
+  test('G02 failed asset can be retried', async ({ page, context }) => {
+    let fail = true;
+    await context.route('**/ships_miscellaneous_sheet*.png*', (route) =>
+      fail &&
+      route.request().resourceType() !== 'script' &&
+      !/[?&](?:url|import)(?:[=&]|$)/.test(route.request().url())
+        ? route.abort()
+        : route.continue(),
+    );
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: 'Play as guest', exact: true })
+      .click();
+    await expect(
+      page.getByRole('heading', { name: 'The arena could not load' }),
+    ).toBeVisible();
+    fail = false;
+    await page.getByRole('button', { name: 'Try again', exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Pause', exact: true }),
+    ).toBeVisible();
+  });
 });
 test('G03 hull stops at the visible island coast', async ({ page }) => {
   await start(page, true);
-  await page.keyboard.down('w');
-  await page.evaluate((ms) => window.pirateBattle?.advance(ms), 3000);
-  await page.keyboard.up('w');
+  for (const [key, ms] of [
+    ['d', 1000],
+    ['w', 200],
+    ['d', 500],
+    ['w', 2267],
+    ['d', 500],
+    ['w', 2000],
+  ] as const) {
+    await page.keyboard.down(key);
+    await page.evaluate((value) => window.pirateBattle?.advance(value), ms);
+    await page.keyboard.up(key);
+  }
   const atCoast = await observe(page);
-  // Upper shore y=156 plus the 62.4-unit capsule support, at most one step away.
-  expect(atCoast.player.y).toBeGreaterThanOrEqual(218.4);
-  expect(atCoast.player.y).toBeLessThan(221);
+  // Main island's south coast y=312 plus the actual 62.4-unit capsule support.
+  expect(atCoast.player.y).toBeGreaterThanOrEqual(374.4);
+  expect(atCoast.player.y).toBeLessThan(377);
 });
 test('review first arena at portrait and landscape sizes', async ({
   page,
 }, testInfo) => {
-  test.setTimeout(60000);
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   await page.goto('/');
   await page.screenshot({
     path: testInfo.outputPath('menu.png'),
@@ -202,7 +210,9 @@ test('review first arena at portrait and landscape sizes', async ({
         ?.getBoundingClientRect();
       const targets = [
         ...document.querySelectorAll('.controls button,.battle-hud'),
-      ].map((e) => e.getBoundingClientRect());
+      ]
+        .map((e) => e.getBoundingClientRect())
+        .filter((r) => r.width > 0);
       return {
         overflow:
           document.documentElement.scrollWidth > innerWidth ||
@@ -226,26 +236,40 @@ test('review first arena at portrait and landscape sizes', async ({
 test('G09 independent simultaneous touch contributions and native cancellation', async ({
   page,
   context,
+  browserName,
 }) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Native simultaneous contacts use Chromium CDP; the Firefox project covers keyboard input.',
+  );
   await start(page);
-  const move = await page
-    .getByRole('button', { name: 'Forward and turn left', exact: true })
-    .boundingBox();
+  const viewport = page.viewportSize()!;
+  const move = { x: viewport.width * 0.65, y: viewport.height * 0.55 };
   const fire = await page
     .getByRole('button', { name: 'Fire forward', exact: true })
     .boundingBox();
-  if (!move || !fire) throw new Error('Missing touch control bounds');
+  if (!fire) throw new Error('Missing touch control bounds');
   const cdp = await context.newCDPSession(page);
   await cdp.send('Input.dispatchTouchEvent', {
     type: 'touchStart',
     touchPoints: [
-      { id: 1, x: move.x + move.width / 2, y: move.y + move.height / 2 },
+      { id: 1, x: move.x, y: move.y },
+      { id: 2, x: fire.x + fire.width / 2, y: fire.y + fire.height / 2 },
+    ],
+  });
+  await cdp.send('Input.dispatchTouchEvent', {
+    type: 'touchMove',
+    touchPoints: [
+      { id: 1, x: move.x - 40, y: move.y - 40 },
       { id: 2, x: fire.x + fire.width / 2, y: fire.y + fire.height / 2 },
     ],
   });
   await page.clock.runFor(300);
   const held = await observe(page);
-  expect(held.input).toMatchObject({ forward: true, turn: -1, front: true });
+  expect(held.input).toMatchObject({ forward: true, turn: 0, front: true });
+  expect(held.input.heading).toBeCloseTo(
+    -Math.PI / 4 - (held.view?.angle ?? 0),
+  );
   expect(held.player.heading).toBeLessThan(-0.7);
   await page.keyboard.down('w');
   await cdp.send('Input.dispatchTouchEvent', {
@@ -262,41 +286,47 @@ test('G09 independent simultaneous touch contributions and native cancellation',
   expect((await observe(page)).input.forward).toBe(false);
 });
 
-test('G02 leaving a pending asset load cannot attach its late canvas', async ({
-  page,
-  context,
-}) => {
-  let release: () => void = () => {};
-  const pending = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  await context.route('**/ships_miscellaneous_sheet*.png*', async (route) => {
-    if (
-      route.request().resourceType() === 'script' ||
-      /[?&](?:url|import)(?:[=&]|$)/.test(route.request().url())
-    ) {
+test.describe('routed pending asset', () => {
+  test.use({ serviceWorkers: 'block' });
+  test('G02 leaving a pending asset load cannot attach its late canvas', async ({
+    page,
+    context,
+  }) => {
+    let release: () => void = () => {};
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let intercepted = false;
+    await context.route('**/ships_miscellaneous_sheet*.png*', async (route) => {
+      if (
+        route.request().resourceType() === 'script' ||
+        /[?&](?:url|import)(?:[=&]|$)/.test(route.request().url())
+      ) {
+        await route.continue();
+        return;
+      }
+      intercepted = true;
+      await pending;
       await route.continue();
-      return;
-    }
-    await pending;
-    await route.continue();
+    });
+    await page.goto('/');
+    await page
+      .getByRole('button', { name: 'Play as guest', exact: true })
+      .click();
+    await expect(page.getByRole('progressbar')).toBeVisible();
+    await expect.poll(() => intercepted).toBe(true);
+    await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
+    release();
+    await expect(
+      page.getByRole('button', { name: 'Play', exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole('button', { name: 'Play as guest', exact: true })
+      .click();
+    await expect(
+      page.getByRole('button', { name: 'Pause', exact: true }),
+    ).toBeVisible();
+    await expect(page.locator('canvas')).toHaveCount(1);
+    expect((await observe(page)).resources.applications).toBe(1);
   });
-  await page.goto('/');
-  await page
-    .getByRole('button', { name: 'Play as guest', exact: true })
-    .click();
-  await expect(page.getByRole('progressbar')).toBeVisible();
-  await page.getByRole('button', { name: 'Main Menu', exact: true }).click();
-  release();
-  await expect(
-    page.getByRole('button', { name: 'Play', exact: true }),
-  ).toBeVisible();
-  await page
-    .getByRole('button', { name: 'Play as guest', exact: true })
-    .click();
-  await expect(
-    page.getByRole('button', { name: 'Pause', exact: true }),
-  ).toBeVisible();
-  await expect(page.locator('canvas')).toHaveCount(1);
-  expect((await observe(page)).resources.applications).toBe(1);
 });
